@@ -141,7 +141,7 @@ Para administrar servidores, los profesionales no suelen usar la ventana pequeñ
     ``` bash
     ssh -p 2222 marcelo@127.0.0.1
     ```
-3. **Primer acceso:** La terminal te preguntará: `"Are you sure you want to continue connecting (yes/no/[fingerprint])?"`. Escribe **yes** y presiona **Enter**.
+3. **Primer acceso:** La terminal te preguntará: *"Are you sure you want to continue connecting (yes/no/[fingerprint])?"*. Escribe **yes** y presiona **Enter**.
 
 4. **Contraseña:** Introduce la contraseña que configuraste en la instalación. **Nota:** No verás asteriscos ni puntos mientras escribes por seguridad; solo escribe y presiona **Enter**.
 
