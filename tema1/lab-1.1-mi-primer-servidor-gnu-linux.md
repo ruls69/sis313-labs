@@ -12,8 +12,19 @@
 
 En Linux, no usamos ventanas ni ratón para administrar servidores. Usamos la **Terminal**. Cada comando es una instrucción precisa. La terminal distingue entre mayúsculas y minúsculas (`Archivo.txt` no es lo mismo que `archivo.txt`).
 
-## 🎯 Objetivo del Laboratorio
+## 🎯 Objetivos del Laboratorio
 
+- **Administrar servidores GNU/Linux** de manera eficiente a través de la interfaz de línea de comandos (CLI).
+
+- **Dominar la navegación y gestión** del sistema de archivos siguiendo el estándar de jerarquía (FHS).
+
+- **Implementar políticas de seguridad** mediante la administración técnica de usuarios, grupos y permisos de acceso.
+
+- **Gestionar el ciclo de vida del software** y el control de servicios esenciales del sistema (APT y Systemd).
+
+- **Configurar y diagnosticar la conectividad de red** y el acceso remoto seguro mediante SSH y reenvío de puertos.
+
+- **Monitorear recursos y auditar el sistema** utilizando herramientas de rendimiento y análisis de registros (logs) en tiempo real.
 
 ## 🛠️ Sección 1: Preparación del Entorno Virtual
 
@@ -55,24 +66,7 @@ Abre VirtualBox y haz clic en el botón **Nueva**. Sigue estas configuraciones c
 
             - Tamaño del disco: **20.00 GB**.
 
-
-**1.2. Simulación de Almacenamiento Adicional**
-
-Un servidor de infraestructura suele tener varios discos para separar el sistema de los datos. Vamos a añadir un segundo "disco físico":
-
-1. Con la VM seleccionada, haz clic en el botón naranja de **Configuración**.
-
-2. Ve al apartado de **Almacenamiento** en el menú de la izquierda.
-
-3. En el árbol de almacenamiento, selecciona el **Controlador: SATA**.
-
-4. Haz clic en el icono de **Añadir Disco Duro** (el icono de disco pequeño con un signo + verde).
-
-5. Elige **Crear** y sigue el asistente (VDI, Reservado dinámicamente) para crear un nuevo disco de **5.00 GB**.
-
-6. Al finalizar, deberías ver dos archivos .vdi bajo el controlador SATA: uno de 20 GB y otro de 5 GB. Haz clic en **Aceptar**.
-
-**1.3. Instalación del Sistema Operativo**
+**1.2. Instalación del Sistema Operativo**
 
 Inicia la VM haciendo clic en **Flecha Verde (Iniciar)**. El instalador de Ubuntu es puramente textual; usa las flechas del teclado para moverte y la tecla **Enter** para seleccionar.
 
@@ -104,48 +98,48 @@ Inicia la VM haciendo clic en **Flecha Verde (Iniciar)**. El instalador de Ubunt
 
 11. **Finalización:** El sistema comenzará a instalarse. Cuando termine, aparecerá la opción **Reboot Now**. Presiona Enter, retira el medio de instalación si VirtualBox te lo pide, y espera a que aparezca el prompt de login.
 
-**1.4. Acceso Remoto: Configuración de Reenvío de Puertos (Port Forwarding)**
+**1.3. Acceso Remoto: Configuración de Reenvío de Puertos (Port Forwarding)**
 
 Como tu servidor está dentro de una red interna de VirtualBox (NAT), tu computadora física no "ve" directamente al servidor. Para administrarlo de forma profesional, vamos a crear un "puente" o túnel que conecte un puerto de tu PC con el puerto de servicio SSH del servidor.
 
-**A. Configuración en VirtualBox**
+1. **Configuración en VirtualBox**
 
-1. Con la VM **SIS313-Lab1.1** seleccionada (puede estar encendida o apagada), haz clic en **Configuración**.
+    1. Con la VM **SIS313-Lab1.1** seleccionada (puede estar encendida o apagada), haz clic en **Configuración**.
 
-2. Ve al menú **Red**.
+    2. Ve al menú **Red**.
 
-3. Asegúrate de que en el "Adaptador 1" esté seleccionado **Conectado a: NAT**.
+    3. Asegúrate de que en el "Adaptador 1" esté seleccionado **Conectado a: NAT**.
 
-4. Haz clic en el botón desplegable **Avanzadas**.
+    4. Haz clic en el botón desplegable **Avanzadas**.
 
-5. Haz clic en el botón **Reenvío de puertos**.
+    5. Haz clic en el botón **Reenvío de puertos**.
 
-6. En la ventana que aparece, haz clic en el icono de **Agregar nueva regla** (el símbolo `+` verde a la derecha) y completa los datos exactamente así:
+    6. En la ventana que aparece, haz clic en el icono de **Agregar nueva regla** (el símbolo `+` verde a la derecha) y completa los datos exactamente así:
 
-    | Nombre | Protocolo | IP anfitrión | Puerto anfitrión | IP invitado | Puerto invitado |
-    | - | - | - | - | - | - |
-    | SSH | TCP |   | 2222 | 10.0.2.15 | 22 |
+        | Nombre | Protocolo | IP anfitrión | Puerto anfitrión | IP invitado | Puerto invitado |
+        | - | - | - | - | - | - |
+        | SSH | TCP |   | 2222 | 10.0.2.15 | 22 |
 
-    **¿Qué significa esto?** Le estamos diciendo a VirtualBox: "*Cualquier petición que llegue a mi PC real por el puerto 2222, envíala automáticamente al puerto 22 (SSH) de mi servidor virtual*".
+        **¿Qué significa esto?** Le estamos diciendo a VirtualBox: "*Cualquier petición que llegue a mi PC real por el puerto 2222, envíala automáticamente al puerto 22 (SSH) de mi servidor virtual*".
 
-7. Haz clic en **Aceptar** en ambas ventanas para guardar.
+    7. Haz clic en **Aceptar** en ambas ventanas para guardar.
 
-**B. Instalación de la Terminal y Prueba de Conexión**
+2. **Instalación de la Terminal y Prueba de Conexión**
 
-Para administrar servidores, los profesionales no suelen usar la ventana pequeña de VirtualBox, sino una terminal moderna.
+    Para administrar servidores, los profesionales no suelen usar la ventana pequeña de VirtualBox, sino una terminal moderna.
 
-1. **Instala Warp:** Descarga e instala [Warp Terminal](https://app.warp.dev/referral/3DY6RJ). Es una terminal inteligente que te ayudará mucho en este semestre.
+    1. **Instala Warp:** Descarga e instala [Warp Terminal](https://app.warp.dev/referral/3DY6RJ). Es una terminal inteligente que te ayudará mucho en este semestre.
 
-2. **Prueba la conexión:** Abre Warp en tu PC física y escribe el siguiente comando (reemplaza `marcelo` por el nombre de usuario que elegiste durante la instalación):
+    2. **Prueba la conexión:** Abre Warp en tu PC física y escribe el siguiente comando (reemplaza `marcelo` por el nombre de usuario que elegiste durante la instalación):
 
-    ``` bash
-    ssh -p 2222 marcelo@127.0.0.1
-    ```
-3. **Primer acceso:** La terminal te preguntará: *"Are you sure you want to continue connecting (yes/no/[fingerprint])?"*. Escribe **yes** y presiona **Enter**.
+        ``` bash
+        ssh -p 2222 marcelo@127.0.0.1
+        ```
+    3. **Primer acceso:** La terminal te preguntará: *"Are you sure you want to continue connecting (yes/no/[fingerprint])?"*. Escribe **yes** y presiona **Enter**.
 
-4. **Contraseña:** Introduce la contraseña que configuraste en la instalación. **Nota:** No verás asteriscos ni puntos mientras escribes por seguridad; solo escribe y presiona **Enter**.
+    4. **Contraseña:** Introduce la contraseña que configuraste en la instalación. **Nota:** No verás asteriscos ni puntos mientras escribes por seguridad; solo escribe y presiona **Enter**.
 
-Si lograste entrar, verás que el texto de la terminal cambia (ej. `marcelo@srv-lab1:~$`). ¡Felicidades, ya estás administrando tu servidor de forma remota!
+    Si lograste entrar, verás que el texto de la terminal cambia (ej. `marcelo@srv-lab1:~$`). ¡Felicidades, ya estás administrando tu servidor de forma remota!
 
 ## 🖥️ Sección 2: Práctica Guiada (Administración de Sistemas)
 
@@ -402,6 +396,8 @@ Implementa el siguiente esquema de seguridad para el personal:
 | - | - | - |
 | Desarrollador	| `devs` | `dev_user` |
 | Administrador | `admins_ti` | `admin_user` |
+
+Para ello, sigue las instrucciones: 
 
 1. Crea los grupos y usuarios correspondientes. Asegúrate de que ambos tengan acceso a la terminal Bash.
 
