@@ -12,7 +12,7 @@
 
 - [Laboratorio 1.1: Mi Primer Servidor GNU/Linux](tema1/lab-1.1-mi-primer-servidor-gnu-linux.md)
 
-- Laboratorio 1.2: Repaso a comandos de administración de GNU/Linux
+- [Laboratorio 1.2: Monitoreo, Rendimiento y Diagnóstico de Sistemas](tema1/lab-1.2-monitoreo-rendimiento-y-diagnostico-de-sistemas.md)
 
 
 ### Tema 2: Infraestructura de Hardware
