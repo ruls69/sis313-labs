@@ -8,9 +8,17 @@
 
 **Semestre:** 1/2026
 
-## Introducción para el Estudiante
-
 ## 🎯 Objetivos del Laboratorio
+
+- **Monitorear y diagnosticar** el estado de salud del servidor (CPU, RAM, Disco y Red) en tiempo real utilizando herramientas avanzadas de terminal.
+
+- **Gestionar el almacenamiento avanzado** mediante el particionamiento manual, formateo de diversos sistemas de archivos y la implementación de memoria SWAP.
+
+- **Configurar conectividad de red profesional** estableciendo direccionamiento IP estático y gestionando la exposición de servicios mediante reenvío de puertos.
+
+- **Evaluar la resiliencia del sistema** ejecutando pruebas de estrés y analizando registros (logs) de auditoría para la resolución de incidentes.
+
+- **Automatizar el mantenimiento preventivo** y la administración de procesos para garantizar la continuidad operativa de la infraestructura.
 
 ## 🛠️ Sección 1: Preparación de la Infraestructura Virtual
 
