@@ -24,7 +24,7 @@
 
 ### Tema 3: Infraestructura de Networking
 
-- Laboratorio 3.1: Proxy Inverso con Balanceador de Carga Avanzado y Servidores Web NGINX
+- [Laboratorio 3.1: Proxy Inverso con Balanceador de Carga Avanzado y Servidores Web NGINX](tema3/lab-3.1-proxy-inverso-con-balanceador-de-carga-avanzado-y-servidores-web-nginx.md)
 
 - Laboratorio 3.2: Infraestructura de Red de una Organización con VLANs
 
