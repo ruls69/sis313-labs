@@ -636,89 +636,90 @@ Después de configurar ambos servidores web backend, procede a configurar el ser
 
 **6.1: Instala NGINX en el servidor Ubuntu (Proxy):**
 
-    ```bash
-    sudo apt update
-    sudo apt install nginx
-    ```
+```bash
+sudo apt update
+sudo apt install nginx
+```
 
-    Verifica que NGINX esté corriendo:
+Verifica que NGINX esté corriendo:
 
-    ```bash
-    sudo systemctl status nginx
-    ```
+```bash
+sudo systemctl status nginx
+```
 
 **6.2: Crea la configuración del balanceador de carga:**
 
-    En Ubuntu 24.04, crea un archivo de configuración en `/etc/nginx/conf.d/`:
+En Ubuntu 24.04, crea un archivo de configuración en `/etc/nginx/conf.d/`:
 
-    ```bash
-    sudo nano /etc/nginx/conf.d/balanceador.conf
-    ```
+```bash
+sudo nano /etc/nginx/conf.d/balanceador.conf
+```
 
-    Agrega la siguiente configuración:
+Agrega la siguiente configuración:
 
-    ```nginx
-    upstream backend {
-        # Por defecto usa Round Robin
-        # Descomentar para cambiar algoritmo:
-        # least_conn;    # Least Connection
-        # ip_hash;        # IP Hash (persistencia de sesión)
-        
-        server 192.168.10.2:80;
-        server 192.168.10.3:80;
+```nginx
+upstream backend {
+    # Por defecto usa Round Robin
+    # Descomentar para cambiar algoritmo:
+    # least_conn;    # Least Connection
+    # ip_hash;        # IP Hash (persistencia de sesión)
+    
+    server 192.168.10.2:80;
+    server 192.168.10.3:80;
+}
+
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+
+    server_name _;
+
+    location / {
+        proxy_pass http://backend;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
+}
+```
 
-    server {
-        listen 80 default_server;
-        listen [::]:80 default_server;
+> **Nota:** Si el archivo de configuración default existe en `/etc/nginx/sites-enabled/`, desactívalo:
 
-        server_name _;
-
-        location / {
-            proxy_pass http://backend;
-
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-        }
-    }
-    ```
-
-    > **Nota:** Si el archivo de configuración default existe en `/etc/nginx/sites-enabled/`, desactívalo:
-    > ```bash
-    > sudo systemctl disable /etc/nginx/sites-enabled/default
-    > # O simplemente renómbralo:
-    > sudo mv /etc/nginx/sites-enabled/default /etc/nginx/sites-enabled/default.bak
-    > ```
+```bash
+sudo systemctl disable /etc/nginx/sites-enabled/default
+# O simplemente renómbralo:
+sudo mv /etc/nginx/sites-enabled/default /etc/nginx/sites-enabled/default.bak
+```
 
 **6.3: Verifica la sintaxis de la configuración:**
 
-    ```bash
-    sudo nginx -t
-    ```
+```bash
+sudo nginx -t
+```
 
-    Deberías ver: `nginx: the configuration file /etc/nginx/nginx.conf syntax is ok`
+Deberías ver: `nginx: the configuration file /etc/nginx/nginx.conf syntax is ok`
 
 **6.4: Reinicia NGINX:**
 
-    ```bash
-    sudo systemctl restart nginx
-    ```
+```bash
+sudo systemctl restart nginx
+```
 
 **6.5: Configurar los diferentes algoritmos de balanceo:**
 
-    Puedes cambiar entre los tres algoritmos editando el archivo de configuración y descomentando la línea correspondiente:
+Puedes cambiar entre los tres algoritmos editando el archivo de configuración y descomentando la línea correspondiente:
 
-    - **Round Robin (por defecto):** No necesita directiva extra
-    - **Least Connection:** Descomenta `least_conn;`
-    - **IP Hash:** Descomenta `ip_hash;`
+- **Round Robin (por defecto):** No necesita directiva extra
+- **Least Connection:** Descomenta `least_conn;`
+- **IP Hash:** Descomenta `ip_hash;`
 
-    Después de cualquier cambio, recuerda reinciar NGINX:
+Después de cualquier cambio, recuerda reinciar NGINX:
 
-    ```bash
-    sudo systemctl restart nginx
-    ```
+```bash
+sudo systemctl restart nginx
+```
 
 ### Paso 7: Verificación y Comparación de Algoritmos de Balanceo
 
@@ -726,115 +727,115 @@ En esta sección, verificarás el funcionamiento del balanceador de carga y comp
 
 **7.1: Obtener la IP del Proxy desde la máquina anfitriona:**
 
-    Para acceder al balanceador desde tu máquina anfitriona (Windows/macOS/Linux), necesitas la IP NAT del proxy:
+Para acceder al balanceador desde tu máquina anfitriona (Windows/macOS/Linux), necesitas la IP NAT del proxy:
 
-    - En la VM Ubuntu (Proxy), ejecuta:
+- En la VM Ubuntu (Proxy), ejecuta:
 
-        ```bash
-        ip addr show enp0s3 | grep "inet "
-        ```
+    ```bash
+    ip addr show enp0s3 | grep "inet "
+    ```
 
-    - Anota la IP (probablemente será algo como `10.0.2.15`). Esta es la IP con la que accederás desde tu navegador.
+- Anota la IP (probablemente será algo como `10.0.2.15`). Esta es la IP con la que accederás desde tu navegador.
 
 **7.2: Prueba con Round Robin (por defecto):**
 
-    El archivo de configuración ya tiene el Round Robin habilitado por defecto.
+El archivo de configuración ya tiene el Round Robin habilitado por defecto.
 
-    - Desde tu máquina anfitriona, abre un navegador y ve a: `http://10.0.2.15/` (reemplaza con la IP real del proxy)
+- Desde tu máquina anfitriona, abre un navegador y ve a: `http://10.0.2.15/` (reemplaza con la IP real del proxy)
 
-    - Recarga la página **varias veces** (presiona F5) y observa los cambios en la respuesta
+- Recarga la página **varias veces** (presiona F5) y observa los cambios en la respuesta
 
-    - **Resultado esperado:** El servidor alternará entre "webserver1" y "webserver2" de forma secuencial:
-        - Recarga 1 → webserver1 (192.168.10.2)
-        - Recarga 2 → webserver2 (192.168.10.3)
-        - Recarga 3 → webserver1 (192.168.10.2)
-        - Y así sucesivamente...
+- **Resultado esperado:** El servidor alternará entre "webserver1" y "webserver2" de forma secuencial:
+    - Recarga 1 → webserver1 (192.168.10.2)
+    - Recarga 2 → webserver2 (192.168.10.3)
+    - Recarga 3 → webserver1 (192.168.10.2)
+    - Y así sucesivamente...
 
 **7.3: Prueba con Least Connection:**
 
-    1. En el servidor Ubuntu, edita la configuración:
+1. En el servidor Ubuntu, edita la configuración:
+
+    ```bash
+    sudo nano /etc/nginx/conf.d/balanceador.conf
+    ```
+
+2. Descomenta la línea `least_conn;`:
+
+    ```nginx
+    upstream backend {
+        least_conn;
+        
+        server 192.168.10.2:80;
+        server 192.168.10.3:80;
+    }
+    ```
+
+3. Verifica la sintaxis y reinicia:
+
+    ```bash
+    sudo nginx -t
+    sudo systemctl restart nginx
+    ```
+
+4. **Prueba con Apache Bench (ab)** para generar múltiples conexiones simultáneamente:
+
+    - En el servidor Ubuntu, instala Apache Bench:
 
         ```bash
-        sudo nano /etc/nginx/conf.d/balanceador.conf
+        sudo apt install apache2-utils
         ```
 
-    2. Descomenta la línea `least_conn;`:
-
-        ```nginx
-        upstream backend {
-            least_conn;
-            
-            server 192.168.10.2:80;
-            server 192.168.10.3:80;
-        }
-        ```
-
-    3. Verifica la sintaxis y reinicia:
+    - Desde el proxy, ejecuta 100 peticiones con 10 concurrentes:
 
         ```bash
-        sudo nginx -t
-        sudo systemctl restart nginx
+        ab -n 100 -c 10 http://localhost/
         ```
 
-    4. **Prueba con Apache Bench (ab)** para generar múltiples conexiones simultáneamente:
+    - **Resultado esperado:** Las conexiones se distribuirán más equitativamente entre ambos servidores, priorizando al que tenga menos conexiones activas.
 
-        - En el servidor Ubuntu, instala Apache Bench:
+    - Alterna entre los dos servidores web, apagando uno a la vez, y verifica que el tráfico se redirige al activo:
 
-            ```bash
-            sudo apt install apache2-utils
-            ```
-
-        - Desde el proxy, ejecuta 100 peticiones con 10 concurrentes:
-
-            ```bash
-            ab -n 100 -c 10 http://localhost/
-            ```
-
-        - **Resultado esperado:** Las conexiones se distribuirán más equitativamente entre ambos servidores, priorizando al que tenga menos conexiones activas.
-
-        - Alterna entre los dos servidores web, apagando uno a la vez, y verifica que el tráfico se redirige al activo:
-
-            ```bash
-            ab -n 50 -c 5 http://localhost/
-            ```
+        ```bash
+        ab -n 50 -c 5 http://localhost/
+        ```
 
 **7.4: Prueba con IP Hash (Persistencia de Sesión):**
 
-    1. Edita la configuración nuevamente:
+1. Edita la configuración nuevamente:
 
-        ```bash
-        sudo nano /etc/nginx/conf.d/balanceador.conf
-        ```
+    ```bash
+    sudo nano /etc/nginx/conf.d/balanceador.conf
+    ```
 
-    2. Reemplaza `least_conn;` con `ip_hash;`:
+2. Reemplaza `least_conn;` con `ip_hash;`:
 
-        ```nginx
-        upstream backend {
-            ip_hash;
-            
-            server 192.168.10.2:80;
-            server 192.168.10.3:80;
-        }
-        ```
+    ```nginx
+    upstream backend {
+        ip_hash;
+        
+        server 192.168.10.2:80;
+        server 192.168.10.3:80;
+    }
+    ```
 
-    3. Verifica y reinicia:
+3. Verifica y reinicia:
 
-        ```bash
-        sudo nginx -t
-        sudo systemctl restart nginx
-        ```
+    ```bash
+    sudo nginx -t
+    sudo systemctl restart nginx
+    ```
 
-    4. Desde tu máquina anfitriona:
+4. Desde tu máquina anfitriona:
 
-        - Abre tu navegador (Firefox, Chrome, etc.) y ve a `http://10.0.2.15/`
+    - Abre tu navegador (Firefox, Chrome, etc.) y ve a `http://10.0.2.15/`
 
-        - Recarga la página **varias veces** (F5) → **Siempre se conectará al MISMO servidor** (por ejemplo, siempre webserver1)
+    - Recarga la página **varias veces** (F5) → **Siempre se conectará al MISMO servidor** (por ejemplo, siempre webserver1)
 
-        - Ahora abre una **ventana de navegación privada/incógnito** e intenta acceder a la misma URL
+    - Ahora abre una **ventana de navegación privada/incógnito** e intenta acceder a la misma URL
 
-        - **Resultado esperado:** Con la ventana privada, la IP es la misma, así que también irá al mismo servidor. Sin embargo, si usas una máquina diferente con diferente IP, iría a un servidor diferente.
+    - **Resultado esperado:** Con la ventana privada, la IP es la misma, así que también irá al mismo servidor. Sin embargo, si usas una máquina diferente con diferente IP, iría a un servidor diferente.
 
-        - Esto demuestra la **persistencia de sesión** basada en IP: la dirección IP del cliente siempre se mapea al mismo servidor backend.
+    - Esto demuestra la **persistencia de sesión** basada en IP: la dirección IP del cliente siempre se mapea al mismo servidor backend.
 
 **7.5: Tabla Resumen de Resultados:**
 
