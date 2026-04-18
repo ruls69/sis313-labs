@@ -24,11 +24,11 @@ El objetivo de este laboratorio es que los estudiantes sean capaces de:
 
 ### 📋 Tabla Resumen de Infraestructura
 
-| Máquina Virtual | Rol | Imagen SO | Interfaz 1 | Red 1 | IP Interna |
+| Máquina Virtual | Rol | Imagen SO | Interfaz | Red | IP |
 |---|---|---|---|---|---|
-| Lab3.1-Proxy | Proxy Inverso + Balanceador | Ubuntu 24.04 | enp0s3 | NAT (DHCP) | 192.168.10.1 |
-| Lab3.1-WebServer1 | Servidor Web | Alpine Linux 3.22 | eth0 | Red Interna | 192.168.10.2 |
-| Lab3.1-WebServer2 | Servidor Web | Alpine Linux 3.22 | eth0 | Red Interna | 192.168.10.3 |
+| Lab3_1-Proxy | Proxy Inverso + Balanceador | Ubuntu 24.04 | 1: enp0s3<br>2: enp0s8 | 1: NAT (DHCP)<br> 2: Red Interna | 1: 10.0.2.15<br>2: 192.168.10.1 |
+| Lab3_1-WebServer1 | Servidor Web | Alpine Linux 3.22 | eth0 | Red Interna | 192.168.10.2 |
+| Lab3_1-WebServer2 | Servidor Web | Alpine Linux 3.22 | eth0 | Red Interna | 192.168.10.3 |
 
 ## 🛠️ Sección 1: Preparación del Entorno Virtual
 
@@ -649,13 +649,13 @@ sudo systemctl status nginx
 
 **6.2: Crea la configuración del balanceador de carga:**
 
-En Ubuntu 24.04, crea un archivo de configuración en `/etc/nginx/conf.d/`:
+En Ubuntu 24.04, modifica el archivo configuración del virtual host por defecto en `/etc/nginx/conf.d/`:
 
 ```bash
-sudo nano /etc/nginx/conf.d/balanceador.conf
+sudo nano /etc/nginx/sites-available/default
 ```
 
-Agrega la siguiente configuración:
+Reemplaza todo el contenido del archivo por la siguiente configuración:
 
 ```nginx
 upstream backend {
@@ -683,14 +683,6 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
-```
-
-> **Nota:** Si el archivo de configuración default existe en `/etc/nginx/sites-enabled/`, desactívalo:
-
-```bash
-sudo systemctl disable /etc/nginx/sites-enabled/default
-# O simplemente renómbralo:
-sudo mv /etc/nginx/sites-enabled/default /etc/nginx/sites-enabled/default.bak
 ```
 
 **6.3: Verifica la sintaxis de la configuración:**
@@ -847,7 +839,7 @@ El archivo de configuración ya tiene el Round Robin habilitado por defecto.
 
 ## ⚙️ Sección 3: Práctica en Grupo
 
-En grupos de 3 o 4, deberán configurar una arquitectura con **un balanceador de carga** (NGINX en Ubuntu) y **cinco servidores web** (NGINX en Alpine), cada uno corriendo una aplicación "Hola Mundo" en PHP o Node.js.
+En grupos de 3 personas (**5 VMs separados en 3 PCs**: 1 proxy, 2 servidores Web con PHP y 2 servidores Web con NodeJS) o 4 personas (**7 VMs separados en 4 PCs**: 1 proxy, 2 servidores Web con PHP, 2 servidores Web con NodeJS y 2 servidores Web con Python u otro). Deberán configurar una arquitectura con **un balanceador de carga** (NGINX en Ubuntu) y **servidores Web Backend** (NGINX en Alpine), cada uno corriendo una aplicación "Hola Mundo" en PHP o Node.js.
 
 - El balanceador debe usar la política de **least connection**.
 
@@ -857,7 +849,7 @@ En grupos de 3 o 4, deberán configurar una arquitectura con **un balanceador de
 
 - **El objetivo es que demuestren el funcionamiento del balanceador** de carga de la siguiente manera:
 
-    1. Muestren que las peticiones se distribuyen a los 5 servidores.
+    1. Muestren que las peticiones se distribuyen a los 4 o 6 servidores Web.
 
     2. Simulen la caída de 2 o 3 de los servidores para demostrar que el tráfico se redirige a los que siguen activos.
 
@@ -871,12 +863,13 @@ La evaluación de este laboratorio se basará en los siguientes puntos, que demu
 
     - **Configuración de la Red Interna:**
 
-        - Verifica que la red interna `/29` esté correctamente configurada en las tres máquinas virtuales (Proxy, Servidor 1 y Servidor 2).
+        - Verifica que la red interna `/29` esté correctamente configurada en las cinco/siete máquinas virtuales (Proxy, Servidor 1, Servidor 2, etc).
 
         - Confirma que las IPs estáticas y la máscara de subred sean correctas (192.168.10.0/29):
             - Proxy: 192.168.10.1
             - WebServer1: 192.168.10.2
             - WebServer2: 192.168.10.3
+            - ...
 
     - **Acceso a Internet desde los Backends:**
 
@@ -886,7 +879,7 @@ La evaluación de este laboratorio se basará en los siguientes puntos, que demu
 
     - **Instalación y Configuración Base:**
 
-        - NGINX instalado y funcionando en todas las máquinas (proxy + 2 servidores web)
+        - NGINX instalado y funcionando en todas las máquinas (proxy + 4/6 servidores web)
 
         - Servidores web respondiendo con página "Hola Mundo" que muestra nombre del servidor e IP
 
@@ -895,14 +888,14 @@ La evaluación de este laboratorio se basará en los siguientes puntos, que demu
     - **Instalación y Configuración del Proxy:**
 
         - NGINX instalado en Ubuntu
-        - Archivo de configuración `/etc/nginx/conf.d/balanceador.conf` presente y bien estructurado
+        - Archivo de configuración `/etc/nginx/sites-available/default.conf` presente y bien estructurado
         - Bloque `upstream` correctamente definido con los dos servidores backend
 
     - **Demostración de Algoritmos (5 puntos cada uno):**
 
         - **Round Robin:** 
             - Captura de pantalla mostrando alternancia secuencial en navegador
-            - Mínimo 5 recargas que demuestren la distribución (web1, web2, web1, web2, web1)
+            - Mínimo 5 recargas que demuestren la distribución (web1, web2, web3, web4, web1, web2, etc.)
 
         - **Least Connection:**
             - Apache Bench instalado y funcional
@@ -919,12 +912,12 @@ La evaluación de este laboratorio se basará en los siguientes puntos, que demu
     - **Diseño de la Arquitectura (10 pts):**
 
         - Diagrama de red documentado (mínimo ASCII, preferentemente visual)
-        - Tabla de direcciones IP asignadas a los 5 servidores
+        - Tabla de direcciones IP asignadas a los 5/7 servidores
         - Justificación del espacio de red elegido
 
     - **Configuración y Operación (15 pts):**
 
-        - 5 máquinas virtuales correctamente configuradas y documentadas
+        - 5/7 máquinas virtuales correctamente configuradas y documentadas
         - Servidores web (Alpine) funcionando con "Hola Mundo" (PHP o Node.js)
         - Balanceador de carga (Ubuntu) con algoritmo **least connection** habilitado
         - Archivo de configuración NGINX del proxy
@@ -944,8 +937,9 @@ La evaluación de este laboratorio se basará en los siguientes puntos, que demu
 
 4. **Informe de Laboratorio (30 pts)**
 
-    El informe debe incluir:
+    El informe debe estar en formato markdown (extensión .md) y debe incluir:
 
+    - **Integrantes del Grupo:** Apellidos y nombres de todos los integrantes.
     - **Introducción:** Concepto de proxy inverso y balanceo de carga
     - **Metodología:** Pasos seguidos para la instalación y configuración
     - **Capturas de Pantalla Detalladas:**
@@ -959,5 +953,7 @@ La evaluación de este laboratorio se basará en los siguientes puntos, que demu
         - Comparación entre algoritmos de balanceo
         - Ventajas y desventajas de cada algoritmo
         - Rendimiento del sistema en cada escenario
-    - **Conclusiones:** Aprendizajes clave y aplicaciones en producción
+    - **Conclusiones:** Aprendizajes clave y aplicaciones en producción (de manera individual)
     - **Anexos:** Archivos de configuración completos (NGINX, interfaces de red, etc.)
+
+    **Nota:** Cada uno de los integrantes del grupo deben enviar el informe al eCampus USFX compreso en un archivo ZIP.
