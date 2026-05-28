@@ -1,4 +1,4 @@
-# Informe de Laboratorio 6.1  
+<img width="574" height="195" alt="image" src="https://github.com/user-attachments/assets/88882c55-d5b7-4ba6-b873-d0b51eee1100" /># Informe de Laboratorio 6.1  
 ## Automatización y Administración de Sistemas Linux con Bash Scripting
 
 **Universidad:** Universidad Mayor, Real y Pontificia de San Francisco Xavier de Chuquisaca  
@@ -144,12 +144,9 @@ sudo netplan apply
 
 ### Evidencia requerida
 
-```text
-[ CAPTURA 1 ]
-Mostrar:
-- Resultado del comando ip addr en ambos nodos.
-- Comunicación exitosa mediante ping entre 10.100.15.210 y 10.100.15.211.
-```
+<img width="538" height="128" alt="image" src="https://github.com/user-attachments/assets/851b790c-b8d6-45d5-a690-bddac30f9046" />
+
+<img width="777" height="243" alt="image" src="https://github.com/user-attachments/assets/6e5786bb-fe1d-4cd4-bc96-fe11a328bdb6" />
 
 ---
 
@@ -224,13 +221,9 @@ sudo ufw reload
 
 ### Evidencia requerida
 
-```text
-[ CAPTURA 2 ]
-Mostrar:
-- Servicio SSH funcionando en el puerto 2222.
-- Resultado de sudo systemctl status ssh.
-- Resultado de sudo ufw status.
-```
+<img width="756" height="308" alt="image" src="https://github.com/user-attachments/assets/abc3c9a7-e794-475f-b56e-edfb3893bc60" />
+
+<img width="472" height="188" alt="image" src="https://github.com/user-attachments/assets/cce36b41-d8e7-4216-988d-40233dfcbc11" />
 
 ---
 
@@ -248,12 +241,8 @@ sudo chmod 755 /opt/admin_scripts
 
 ### Evidencia requerida
 
-```text
-[ CAPTURA 3 ]
-Mostrar:
-- Directorios creados correctamente.
-- Resultado del comando ls -l /opt.
-```
+<img width="803" height="130" alt="image" src="https://github.com/user-attachments/assets/a0f761af-79cb-4f75-b3fb-da84618b78d9" />
+
 
 ---
 
@@ -281,12 +270,8 @@ ssh-copy-id -p 2222 -i ~/.ssh/id_lab61.pub adalidgt@10.100.15.211
 
 ### Evidencia requerida
 
-```text
-[ CAPTURA 4 ]
-Mostrar:
-- Generación de llave SSH.
-- Conexión remota exitosa sin contraseña hacia el Nodo 2.
-```
+<img width="573" height="228" alt="image" src="https://github.com/user-attachments/assets/870a7a27-2095-4b22-b439-f368a554d2f1" />
+
 
 ---
 
@@ -333,12 +318,8 @@ sudo chmod +x /opt/admin_scripts/01_intro.sh
 
 ### Evidencia requerida
 
-```text
-[ CAPTURA 5 ]
-Mostrar:
-- Ejecución del script 01_intro.sh.
-- Registro generado en /tmp/admin_access.log.
-```
+<img width="531" height="146" alt="image" src="https://github.com/user-attachments/assets/abe2ada4-f2f1-4a66-8700-46637551c60f" />
+
 
 ---
 
@@ -362,12 +343,8 @@ El script verificaba:
 
 ### Evidencia requerida
 
-```text
-[ CAPTURA 6 ]
-Mostrar:
-- Ejecución del script 02_check.sh.
-- Mensajes [OK], [ERROR] y porcentaje de disco.
-```
+<img width="455" height="63" alt="image" src="https://github.com/user-attachments/assets/f593887d-273f-400b-8d5d-41ae0b712c3c" />
+
 
 ---
 
@@ -385,11 +362,8 @@ sudo nano /opt/admin_scripts/03_pipes.sh
 
 ### Evidencia requerida
 
-```text
-[ CAPTURA 7 ]
-Mostrar:
-- Resultado del Top 5 de puertos TCP más utilizados.
-```
+<img width="447" height="147" alt="image" src="https://github.com/user-attachments/assets/8672a839-ed1c-49da-ad9e-f9495e1294b8" />
+
 
 ---
 
@@ -413,12 +387,8 @@ El script permitió:
 
 ### Evidencia requerida
 
-```text
-[ CAPTURA 8 ]
-Mostrar:
-- Conteo de logs.
-- Total de peticiones HTTP 200.
-```
+<img width="769" height="178" alt="image" src="https://github.com/user-attachments/assets/9e8e6519-fee4-4f1f-861a-ae8360121a09" />
+
 
 ---
 
@@ -451,12 +421,7 @@ sudo nano /opt/admin_scripts/05_user_manager.sh
 
 ### Evidencia requerida
 
-```text
-[ CAPTURA 9 ]
-Mostrar:
-- Creación automática de grupos y usuarios.
-- Mensajes [OK] y [INFO].
-```
+<img width="420" height="100" alt="image" src="https://github.com/user-attachments/assets/4d3c6e38-623b-40df-8c76-e5237164577b" />
 
 ---
 
@@ -474,12 +439,8 @@ sudo nano /opt/admin_scripts/log_cleanup.sh
 
 ### Evidencia requerida
 
-```text
-[ CAPTURA 10 ]
-Mostrar:
-- Resultado del script log_cleanup.sh.
-- Reporte de limpieza generado.
-```
+<img width="438" height="80" alt="image" src="https://github.com/user-attachments/assets/d337d7ec-baa6-4cfa-8600-d89a95f4c6ae" />
+
 
 ---
 
@@ -503,12 +464,8 @@ El script reiniciaba automáticamente Nginx si detectaba fallos.
 
 ### Evidencia requerida
 
-```text
-[ CAPTURA 11 ]
-Mostrar:
-- Resultado del health check.
-- Registro generado en /var/log/system_check.log.
-```
+<img width="607" height="85" alt="image" src="https://github.com/user-attachments/assets/2124dcbd-dd5a-482c-b909-55d47151b33e" />
+
 
 ---
 
@@ -528,12 +485,7 @@ También se creó un usuario específico llamado `menu`, con privilegios sudo.
 
 ### Evidencia requerida
 
-```text
-[ CAPTURA 12 ]
-Mostrar:
-- Menú interactivo ejecutándose.
-- Opciones visibles en consola.
-```
+<img width="574" height="195" alt="image" src="https://github.com/user-attachments/assets/b7198878-0bf3-4f40-a6ec-2e7e6c6c24bb" />
 
 ---
 
@@ -563,12 +515,8 @@ scp -O -i ~/.ssh/id_lab61 -P 2222 ~/grupo_deploy.sh adalidgt@10.100.15.211:/tmp/
 
 ### Evidencia requerida
 
-```text
-[ CAPTURA 13 ]
-Mostrar:
-- Transferencia exitosa del archivo mediante SCP.
-- Uso del parámetro -P 2222 y -O.
-```
+<img width="1044" height="53" alt="image" src="https://github.com/user-attachments/assets/eae0de77-be7c-48c6-86d7-5f15a9793db5" />
+
 
 ---
 
@@ -588,12 +536,7 @@ sudo ./grupoX_deploy.sh GrupoX Ruls Adalid
 
 ### Evidencia requerida
 
-```text
-[ CAPTURA 14 ]
-Mostrar:
-- Ejecución correcta del deploy.
-- Sitio web generado en /var/www/.
-```
+<img width="533" height="98" alt="image" src="https://github.com/user-attachments/assets/a790847c-00ab-49f8-b5d1-b98625bc8176" />
 
 ---
 
