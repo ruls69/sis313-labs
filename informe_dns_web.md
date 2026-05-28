@@ -1,105 +1,87 @@
-# INFORME DE LABORATORIO 6.1
+# Informe de Laboratorio 6.1  
+## Automatización y Administración de Sistemas Linux con Bash Scripting
 
-# Automatización de Administración Linux con Bash Scripting y Despliegue Distribuido
+**Universidad:** Universidad Mayor, Real y Pontificia de San Francisco Xavier de Chuquisaca  
+**Facultad:** Facultad de Ciencias y Tecnología  
+**Carrera:** Ingeniería en Ciencias de la Computación  
+**Asignatura:** SIS313 – Infraestructura, Plataformas Tecnológicas y Redes  
+**Docente:** Ing. Marcelo Quispe Ortega  
+**Laboratorio:** Laboratorio 6.1 – Automatización y Administración de Sistemas Linux  
+**Gestión:** 1/2026  
+**Grupo:** [Completar]  
 
----
-
-# Universidad Mayor, Real y Pontificia de San Francisco Xavier de Chuquisaca
-
-**Facultad:** Facultad de Ciencias y Tecnología
-**Carrera:** Ingeniería en Ciencias de la Computación
-**Asignatura:** SIS313 – Infraestructura, Plataformas Tecnológicas y Redes
-**Docente:** Ing. Marcelo Quispe Ortega
-**Laboratorio:** 6.1 – Automatización y Administración Linux
-**Gestión:** 1/2026
-**Universitario:** [TU NOMBRE]
-**Grupo:** [NÚMERO DE GRUPO]
+### Integrantes
+- Dylan Huayta Fuertes  
+- [Nombre del compañero]
 
 ---
 
 # 1. Introducción
 
-El presente laboratorio tuvo como finalidad implementar mecanismos de automatización para tareas administrativas en sistemas Linux utilizando Bash Scripting sobre Ubuntu Server. La práctica se enfocó en el desarrollo de scripts para monitoreo, mantenimiento, administración de usuarios y despliegue remoto de servicios mediante SSH.
+El presente laboratorio tuvo como finalidad aplicar técnicas de automatización en entornos Linux mediante Bash Scripting, utilizando Ubuntu Server como sistema operativo principal. La práctica estuvo orientada a fortalecer conocimientos relacionados con administración de sistemas, automatización de tareas repetitivas, monitoreo básico de servicios y administración remota entre servidores Linux.
 
-La automatización de tareas administrativas representa uno de los pilares fundamentales en la administración moderna de infraestructuras TI, ya que permite reducir errores humanos, optimizar tiempos operativos y estandarizar procedimientos críticos dentro de entornos productivos.
+Durante el desarrollo del laboratorio se trabajó con dos máquinas virtuales Ubuntu Server conectadas mediante una red Hotspot local, permitiendo implementar comunicación remota vía SSH, automatización de despliegues y verificación de servicios entre ambos nodos.
 
-Durante el desarrollo de la práctica se trabajó en una arquitectura distribuida compuesta por dos máquinas físicas interconectadas mediante una red Hotspot, permitiendo realizar configuraciones de administración remota, despliegue automatizado e inventario de servicios.
-
----
-
-# 2. Objetivos del Laboratorio
-
-## 2.1 Objetivo General
-
-Implementar soluciones automatizadas de administración y monitoreo en sistemas Linux utilizando Bash Scripting y comunicación remota segura mediante SSH.
+Además de la creación de scripts administrativos, se realizaron configuraciones de red estática, firewall, autenticación mediante llaves SSH y despliegue de servicios web utilizando Nginx.
 
 ---
 
-## 2.2 Objetivos Específicos
+# 2. Objetivos
 
-* Automatizar tareas de monitoreo y mantenimiento del sistema.
-* Implementar scripts de análisis de red y auditoría de servicios.
-* Gestionar usuarios y grupos masivamente mediante archivos CSV.
-* Configurar comunicación remota segura utilizando SSH y autenticación por llaves.
-* Desplegar servicios web remotamente mediante scripts automatizados.
-* Realizar inventario y monitoreo de servidores remotos.
+## 2.1. Objetivo General
 
----
+Implementar mecanismos de automatización y administración de sistemas Linux utilizando Bash Scripting en un entorno distribuido con comunicación remota segura.
 
-# 3. Topología de Red y Entorno de Trabajo
+## 2.2. Objetivos Específicos
 
-La práctica fue desarrollada utilizando dos máquinas físicas independientes ejecutando Ubuntu Server conectadas mediante una red Hotspot local.
-
----
-
-## 3.1 Arquitectura de Red
-
-| Nodo   | Función                          | Usuario  | Dirección IP  | Puerto SSH |
-| ------ | -------------------------------- | -------- | ------------- | ---------- |
-| Nodo 1 | Servidor Administrador Principal | ruls     | 10.100.15.210 | 22         |
-| Nodo 2 | Servidor Remoto Secundario       | adalidgt | 10.100.15.211 | 2222       |
+- Automatizar tareas administrativas mediante scripts Bash.
+- Configurar direccionamiento IP estático utilizando Netplan.
+- Implementar acceso remoto seguro mediante SSH y autenticación por llaves.
+- Desarrollar scripts de monitoreo y mantenimiento del sistema.
+- Automatizar la creación masiva de usuarios desde archivos CSV.
+- Implementar scripts de auditoría e inventario remoto.
+- Realizar despliegues automatizados entre servidores Linux.
 
 ---
 
-## 3.2 Parámetros de Red
+# 3. Topología de Red y Roles
 
-| Parámetro      | Valor               |
-| -------------- | ------------------- |
-| Gateway        | 10.100.15.179       |
-| Máscara        | 255.255.255.0 (/24) |
-| DNS Primario   | 8.8.8.8             |
-| DNS Secundario | 1.1.1.1             |
+La práctica fue desarrollada utilizando una red Hotspot local entre dos máquinas virtuales Ubuntu Server.
 
----
+| Nodo | Usuario | Función | Dirección IP | Puerto SSH |
+|---|---|---|---|---|
+| Nodo 1 | ruls | Administrador Principal | 10.100.15.210 | 22 |
+| Nodo 2 | adalidgt | Administrador Secundario | 10.100.15.211 | 2222 |
 
-📸 **CAPTURA REQUERIDA:**
-Topología de red utilizada durante la práctica mostrando ambas máquinas físicas conectadas mediante Hotspot.
+## Parámetros de Red
+
+- **Máscara:** 255.255.255.0 (/24)
+- **Gateway:** 10.100.15.179
+- **DNS:** 8.8.8.8, 1.1.1.1
 
 ---
 
 # 4. Desarrollo del Laboratorio
 
----
-
-# FASE 1: Preparación del Entorno y Configuración de Red
+# FASE 1: Preparación del Entorno
 
 ---
 
-## 4.1 Configuración de IP Estática – Nodo 1 (Administrador Principal)
+## 4.1. Configuración de Red Estática
 
-En el Nodo 1 se configuró direccionamiento IP estático utilizando Netplan para asegurar conectividad permanente entre los nodos.
+Para garantizar conectividad permanente entre ambos nodos, se configuraron direcciones IP estáticas mediante Netplan.
 
 ---
 
-### Edición del archivo Netplan
+### Configuración realizada en Nodo 1 (ruls)
 
-*(Configuración realizada en el Nodo 1 – Usuario: ruls)*
+Archivo editado:
 
 ```bash
 sudo nano /etc/netplan/00-installer-config.yaml
 ```
 
-### Configuración aplicada
+Configuración aplicada:
 
 ```yaml
 network:
@@ -118,7 +100,7 @@ network:
           - 1.1.1.1
 ```
 
-### Aplicación de cambios
+Aplicación de cambios:
 
 ```bash
 sudo netplan apply
@@ -126,29 +108,15 @@ sudo netplan apply
 
 ---
 
-📸 **CAPTURA REQUERIDA:**
-Archivo Netplan configurado en el Nodo 1.
+### Configuración realizada en Nodo 2 (adalidgt)
 
-📸 **CAPTURA REQUERIDA:**
-Resultado del comando `ip addr` verificando la IP 10.100.15.210.
-
----
-
-## 4.2 Configuración de IP Estática – Nodo 2 (Administrador Secundario)
-
-Se realizó la misma configuración de red en el Nodo 2 utilizando la dirección IP correspondiente.
-
----
-
-### Edición del archivo Netplan
-
-*(Configuración realizada en el Nodo 2 – Usuario: adalidgt)*
+Archivo editado:
 
 ```bash
 sudo nano /etc/netplan/00-installer-config.yaml
 ```
 
-### Configuración aplicada
+Configuración aplicada:
 
 ```yaml
 network:
@@ -167,7 +135,7 @@ network:
           - 1.1.1.1
 ```
 
-### Aplicación de cambios
+Aplicación de cambios:
 
 ```bash
 sudo netplan apply
@@ -175,28 +143,29 @@ sudo netplan apply
 
 ---
 
-📸 **CAPTURA REQUERIDA:**
-Archivo Netplan configurado en el Nodo 2.
+### Evidencia requerida
 
-📸 **CAPTURA REQUERIDA:**
-Resultado del comando `ip addr` verificando la IP 10.100.15.211.
+```text
+[ CAPTURA 1 ]
+Mostrar:
+- Resultado del comando ip addr en ambos nodos.
+- Comunicación exitosa mediante ping entre 10.100.15.210 y 10.100.15.211.
+```
 
 ---
 
-# 5. Instalación de Dependencias Base
+## 4.2. Instalación de Dependencias Base
 
 ---
 
-## 5.1 Instalación de Servicios – Nodo 1
-
-*(Instalación realizada en el Nodo 1 – Usuario: ruls)*
+### Instalación realizada en Nodo 1 (ruls)
 
 ```bash
 sudo apt update
 sudo apt install nginx netcat-openbsd -y
 ```
 
-### Generación de tráfico HTTP
+Pruebas locales de tráfico:
 
 ```bash
 curl -s http://localhost > /dev/null
@@ -205,24 +174,14 @@ curl -s http://localhost > /dev/null
 
 ---
 
-📸 **CAPTURA REQUERIDA:**
-Instalación exitosa de Nginx y Netcat en el Nodo 1.
-
-📸 **CAPTURA REQUERIDA:**
-Estado activo del servicio Nginx utilizando `systemctl status nginx`.
-
----
-
-## 5.2 Instalación de Servicios – Nodo 2
-
-*(Instalación realizada en el Nodo 2 – Usuario: adalidgt)*
+### Instalación realizada en Nodo 2 (adalidgt)
 
 ```bash
 sudo apt update
 sudo apt install openssh-server nginx netcat-openbsd -y
 ```
 
-### Habilitación del servicio SSH
+Habilitación del servicio SSH:
 
 ```bash
 sudo systemctl start ssh
@@ -231,23 +190,21 @@ sudo systemctl enable ssh
 
 ---
 
-## 5.3 Configuración de SSH en Puerto Personalizado
+### Cambio del puerto SSH en Nodo 2 (adalidgt)
 
-Se modificó el servicio SSH para utilizar el puerto 2222 como medida básica de seguridad.
-
-*(Configuración realizada en el Nodo 2 – Usuario: adalidgt)*
+Archivo editado:
 
 ```bash
 sudo nano /etc/ssh/sshd_config
 ```
 
-### Modificación realizada
+Parámetro modificado:
 
 ```text
 Port 2222
 ```
 
-### Reinicio del servicio SSH
+Reinicio del servicio:
 
 ```bash
 sudo systemctl restart ssh
@@ -255,41 +212,32 @@ sudo systemctl restart ssh
 
 ---
 
-📸 **CAPTURA REQUERIDA:**
-Archivo `sshd_config` mostrando el puerto 2222.
+### Configuración del Firewall (UFW) en Nodo 2
 
-📸 **CAPTURA REQUERIDA:**
-Resultado del comando `ss -tulnp | grep 2222`.
-
----
-
-## 5.4 Configuración del Firewall (UFW) en Nodo 2
-
-Para permitir el tráfico SSH a través del nuevo puerto configurado, se habilitó la regla correspondiente en el firewall UFW del servidor secundario.
-
-*(Configuración realizada en el Nodo 2 – Usuario: adalidgt)*
+Para permitir el tráfico mediante el nuevo puerto configurado, se habilitó una regla específica en el firewall.
 
 ```bash
 sudo ufw allow 2222/tcp
 sudo ufw reload
 ```
 
-Esta configuración permitió aceptar conexiones remotas seguras únicamente por el puerto personalizado 2222/TCP, reforzando la seguridad básica del servidor al evitar el uso del puerto estándar 22.
+---
+
+### Evidencia requerida
+
+```text
+[ CAPTURA 2 ]
+Mostrar:
+- Servicio SSH funcionando en el puerto 2222.
+- Resultado de sudo systemctl status ssh.
+- Resultado de sudo ufw status.
+```
 
 ---
 
-📸 **CAPTURA REQUERIDA:**
-Mostrar el resultado del comando `sudo ufw status` verificando la regla habilitada para el puerto 2222/TCP.
+## 4.3. Creación del Entorno de Trabajo (Nodo 1)
 
----
-
-# 6. Creación del Entorno de Trabajo
-
----
-
-## 6.1 Directorios de Administración
-
-*(Configuración realizada en el Nodo 1 – Usuario: ruls)*
+Se prepararon los directorios donde se almacenarían los scripts administrativos y respaldos.
 
 ```bash
 sudo mkdir -p /opt/admin_scripts
@@ -299,18 +247,24 @@ sudo chmod 755 /opt/admin_scripts
 
 ---
 
-📸 **CAPTURA REQUERIDA:**
-Resultado del comando `ls -l /opt/`.
+### Evidencia requerida
+
+```text
+[ CAPTURA 3 ]
+Mostrar:
+- Directorios creados correctamente.
+- Resultado del comando ls -l /opt.
+```
 
 ---
 
-# 7. Intercambio de Llaves SSH
+## 4.4. Intercambio de Llaves SSH
+
+Para automatizar tareas remotas sin solicitar contraseñas, se configuró autenticación mediante llaves SSH.
 
 ---
 
-## 7.1 Generación de Llaves Criptográficas
-
-*(Proceso realizado en el Nodo 1 – Usuario: ruls)*
+### Generación de llaves en Nodo 1 (ruls)
 
 ```bash
 ssh-keygen -t ed25519 -C "admin@lab61" -f ~/.ssh/id_lab61
@@ -318,7 +272,7 @@ ssh-keygen -t ed25519 -C "admin@lab61" -f ~/.ssh/id_lab61
 
 ---
 
-## 7.2 Envío de Llave Pública al Nodo Remoto
+### Copia de llave pública al Nodo 2
 
 ```bash
 ssh-copy-id -p 2222 -i ~/.ssh/id_lab61.pub adalidgt@10.100.15.211
@@ -326,35 +280,32 @@ ssh-copy-id -p 2222 -i ~/.ssh/id_lab61.pub adalidgt@10.100.15.211
 
 ---
 
-## 7.3 Validación de Acceso Sin Contraseña
+### Evidencia requerida
 
-```bash
-ssh -i ~/.ssh/id_lab61 -p 2222 adalidgt@10.100.15.211
+```text
+[ CAPTURA 4 ]
+Mostrar:
+- Generación de llave SSH.
+- Conexión remota exitosa sin contraseña hacia el Nodo 2.
 ```
 
 ---
 
-📸 **CAPTURA REQUERIDA:**
-Proceso de generación de llave SSH.
-
-📸 **CAPTURA REQUERIDA:**
-Acceso exitoso al Nodo 2 sin contraseña.
+# FASE 2: Desarrollo de Scripts Administrativos
 
 ---
 
-# 8. Desarrollo de Scripts Bash
+## 4.5. Script de Bienvenida
 
----
+Se desarrolló un script básico para registrar accesos administrativos y mostrar mensajes personalizados.
 
-## 8.1 Script de Bienvenida
-
-*(Creado en el Nodo 1 – Usuario: ruls)*
+Archivo creado en Nodo 1 (ruls):
 
 ```bash
 sudo nano /opt/admin_scripts/01_intro.sh
 ```
 
-### Código implementado
+Código implementado:
 
 ```bash
 #!/bin/bash
@@ -372,7 +323,7 @@ echo "Último registro añadido a $LOG_FILE:"
 tail -n 1 $LOG_FILE
 ```
 
-### Permisos y ejecución
+Permisos y ejecución:
 
 ```bash
 sudo chmod +x /opt/admin_scripts/01_intro.sh
@@ -381,266 +332,229 @@ sudo chmod +x /opt/admin_scripts/01_intro.sh
 
 ---
 
-📸 **CAPTURA REQUERIDA:**
-Ejecución exitosa del script `01_intro.sh`.
+### Evidencia requerida
+
+```text
+[ CAPTURA 5 ]
+Mostrar:
+- Ejecución del script 01_intro.sh.
+- Registro generado en /tmp/admin_access.log.
+```
 
 ---
 
-## 8.2 Script de Verificación del Sistema
+## 4.6. Verificación de Archivos y Disco
 
-*(Creado en el Nodo 1 – Usuario: ruls)*
+Se implementó un script para validar la existencia de archivos críticos y verificar el uso del disco.
+
+Archivo creado:
 
 ```bash
 sudo nano /opt/admin_scripts/02_check.sh
 ```
 
-### Código implementado
+El script verificaba:
 
-```bash
-#!/bin/bash
+- Existencia del archivo de logs.
+- Existencia del directorio web.
+- Porcentaje de uso del disco.
 
-LOG_FILE="/tmp/admin_access.log"
-DIR_WEB="/var/www/html"
+---
 
-if [ -f "$LOG_FILE" ]; then
-    echo "[OK] El archivo de log $LOG_FILE existe."
-else
-    echo "[ALERTA] El archivo de log NO fue encontrado."
-fi
+### Evidencia requerida
 
-if [ -d "$DIR_WEB" ]; then
-    echo "[OK] El directorio web $DIR_WEB existe."
-else
-    echo "[ERROR] El directorio web $DIR_WEB no existe. Creándolo..."
-    sudo mkdir -p "$DIR_WEB"
-    echo "[OK] Directorio creado."
-fi
-
-USAGE=$(df -h / | awk 'NR==2 {print $5}' | sed 's/%//g')
-
-if [ "$USAGE" -gt 85 ]; then
-    echo "[CRITICO] Uso de disco: $USAGE%. Limpieza requerida."
-else
-    echo "[OK] Uso de disco: $USAGE%."
-fi
-```
-
-### Ejecución
-
-```bash
-sudo chmod +x /opt/admin_scripts/02_check.sh
-/opt/admin_scripts/02_check.sh
+```text
+[ CAPTURA 6 ]
+Mostrar:
+- Ejecución del script 02_check.sh.
+- Mensajes [OK], [ERROR] y porcentaje de disco.
 ```
 
 ---
 
-📸 **CAPTURA REQUERIDA:**
-Ejecución completa del script `02_check.sh`.
+## 4.7. Auditoría de Puertos TCP
 
----
+Se utilizó el comando `ss` junto a pipes para identificar los puertos TCP más utilizados.
 
-## 8.3 Auditoría de Puertos TCP
-
-*(Creado en el Nodo 1 – Usuario: ruls)*
+Archivo creado:
 
 ```bash
 sudo nano /opt/admin_scripts/03_pipes.sh
 ```
 
-### Código implementado
+---
 
-```bash
-#!/bin/bash
+### Evidencia requerida
 
-echo "Top 5 puertos TCP más utilizados:"
-sudo ss -tuln | grep 'tcp ' | awk '{print $5}' | cut -d':' -f2 | sort | uniq -c | sort -nr | head -n 5
-```
-
-### Ejecución
-
-```bash
-sudo chmod +x /opt/admin_scripts/03_pipes.sh
-/opt/admin_scripts/03_pipes.sh
+```text
+[ CAPTURA 7 ]
+Mostrar:
+- Resultado del Top 5 de puertos TCP más utilizados.
 ```
 
 ---
 
-📸 **CAPTURA REQUERIDA:**
-Resultado del script `03_pipes.sh`.
+## 4.8. Análisis de Logs
+
+Se desarrolló un script para analizar logs de Nginx utilizando estructuras `for` y `while`.
+
+Archivo creado:
+
+```bash
+sudo nano /opt/admin_scripts/04_summarize_logs.sh
+```
+
+El script permitió:
+
+- Contar líneas de archivos `.log`
+- Contabilizar peticiones HTTP 200
+- Auditar actividad web
 
 ---
 
-## 8.4 Gestión Masiva de Usuarios vía CSV
+### Evidencia requerida
 
-*(Creado en el Nodo 1 – Usuario: ruls)*
-
-### Creación del CSV
-
-```bash
-sudo bash -c 'echo -e "ana_sistemas,sistemas\nluis_soporte,soporte\neva_sistemas,sistemas\ncarlos_redes,redes" > /opt/admin_scripts/usuarios.csv'
+```text
+[ CAPTURA 8 ]
+Mostrar:
+- Conteo de logs.
+- Total de peticiones HTTP 200.
 ```
 
-### Script implementado
+---
+
+## 4.9. Gestión Masiva de Usuarios vía CSV
+
+Se automatizó la creación de grupos y usuarios leyendo datos desde un archivo CSV.
+
+Archivo CSV:
+
+```bash
+sudo nano /opt/admin_scripts/usuarios.csv
+```
+
+Contenido:
+
+```text
+ana_sistemas,sistemas
+luis_soporte,soporte
+eva_sistemas,sistemas
+carlos_redes,redes
+```
+
+Script implementado:
 
 ```bash
 sudo nano /opt/admin_scripts/05_user_manager.sh
 ```
 
-```bash
-#!/bin/bash
+---
 
-CSV_FILE="/opt/admin_scripts/usuarios.csv"
+### Evidencia requerida
 
-if [ ! -f "$CSV_FILE" ]; then
-    echo "[ERROR] $CSV_FILE no encontrado."
-    exit 1
-fi
-
-cat "$CSV_FILE" | while IFS=',' read -r USERNAME GROUPNAME; do
-
-    GROUPNAME=$(echo "$GROUPNAME" | tr -d '[:space:]')
-    USERNAME=$(echo "$USERNAME" | tr -d '[:space:]')
-
-    if ! grep -q "^$GROUPNAME:" /etc/group; then
-        sudo groupadd "$GROUPNAME"
-        echo "[OK] Grupo '$GROUPNAME' creado."
-    fi
-
-    if ! id "$USERNAME" &>/dev/null; then
-        sudo useradd -m -g "$GROUPNAME" -s /bin/bash "$USERNAME"
-        echo "[OK] Usuario '$USERNAME' creado."
-    else
-        echo "[INFO] Usuario '$USERNAME' ya existe."
-    fi
-
-done
-```
-
-### Ejecución
-
-```bash
-sudo chmod +x /opt/admin_scripts/05_user_manager.sh
-sudo /opt/admin_scripts/05_user_manager.sh
+```text
+[ CAPTURA 9 ]
+Mostrar:
+- Creación automática de grupos y usuarios.
+- Mensajes [OK] y [INFO].
 ```
 
 ---
 
-📸 **CAPTURA REQUERIDA:**
-Resultado exitoso del script de gestión de usuarios.
+## 4.10. Limpieza Automatizada de Logs
 
----
+Se implementó un mecanismo automático de eliminación de logs antiguos utilizando `find` y `mtime`.
 
-## 8.5 Limpieza Automatizada de Logs
-
-*(Creado en el Nodo 1 – Usuario: ruls)*
+Archivo creado:
 
 ```bash
 sudo nano /opt/admin_scripts/log_cleanup.sh
 ```
 
-### Código implementado
+---
 
-```bash
-#!/bin/bash
+### Evidencia requerida
 
-DIAS=30
-LOG_DIRS="/var/log /var/log/nginx /var/log/apache2"
-REPORTE="/tmp/cleanup_report.log"
-
-echo "[INFO] Limpieza iniciada..." > "$REPORTE"
-
-for DIR in $LOG_DIRS; do
-
-    if [ -d "$DIR" ]; then
-
-        COUNT=$(find "$DIR" -type f -name "*.log*" -mtime +$DIAS 2>/dev/null | wc -l)
-
-        if [ "$COUNT" -gt 0 ]; then
-            find "$DIR" -type f -name "*.log*" -mtime +$DIAS -delete 2>/dev/null
-            echo "[OK] $DIR: $COUNT logs eliminados." >> "$REPORTE"
-        else
-            echo "[INFO] $DIR: No hay logs mayores a $DIAS días." >> "$REPORTE"
-        fi
-
-    fi
-
-done
-
-cat "$REPORTE"
-```
-
-### Ejecución
-
-```bash
-sudo chmod +x /opt/admin_scripts/log_cleanup.sh
-sudo /opt/admin_scripts/log_cleanup.sh
+```text
+[ CAPTURA 10 ]
+Mostrar:
+- Resultado del script log_cleanup.sh.
+- Reporte de limpieza generado.
 ```
 
 ---
 
-📸 **CAPTURA REQUERIDA:**
-Resultado del script `log_cleanup.sh`.
+## 4.11. Health Check Automático
 
----
+Se desarrolló un script capaz de monitorear:
 
-## 8.6 Health Check del Sistema
+- Estado del servicio Nginx
+- Uso del disco
+- Memoria disponible
 
-*(Creado en el Nodo 1 – Usuario: ruls)*
+Archivo creado:
 
 ```bash
 sudo nano /opt/admin_scripts/06_check_system.sh
 ```
 
-### Código implementado
+El script reiniciaba automáticamente Nginx si detectaba fallos.
 
-```bash
-#!/bin/bash
+---
 
-LOGFILE="/var/log/system_check.log"
+### Evidencia requerida
 
-sudo touch $LOGFILE
-
-if ! systemctl is-active --quiet nginx; then
-    echo "$(date) - ALERTA: Nginx inactivo. Reiniciando..." | sudo tee -a $LOGFILE > /dev/null
-    sudo systemctl restart nginx
-else
-    echo "$(date) - OK: Nginx activo." | sudo tee -a $LOGFILE > /dev/null
-fi
-
-USAGE=$(df -h / | awk 'NR==2 {print $5}' | sed 's/%//g')
-
-if [ "$USAGE" -gt 85 ]; then
-    echo "$(date) - CRITICO: Disco al $USAGE%." | sudo tee -a $LOGFILE > /dev/null
-else
-    echo "$(date) - OK: Disco al $USAGE%." | sudo tee -a $LOGFILE > /dev/null
-fi
-
-echo "$(date) - INFO: Memoria disponible: $(free | grep Mem | awk '{print $7}')KB." | sudo tee -a $LOGFILE > /dev/null
-
-sudo tail -n 3 $LOGFILE
-```
-
-### Ejecución
-
-```bash
-sudo chmod +x /opt/admin_scripts/06_check_system.sh
-sudo /opt/admin_scripts/06_check_system.sh
+```text
+[ CAPTURA 11 ]
+Mostrar:
+- Resultado del health check.
+- Registro generado en /var/log/system_check.log.
 ```
 
 ---
 
-📸 **CAPTURA REQUERIDA:**
-Resultado del Health Check mostrando estado del disco y Nginx.
+## 4.12. Menú Interactivo de Administración
+
+Se creó un menú interactivo para centralizar la ejecución de scripts administrativos.
+
+Archivo creado:
+
+```bash
+sudo nano /opt/admin_scripts/07_admin_menu.sh
+```
+
+También se creó un usuario específico llamado `menu`, con privilegios sudo.
 
 ---
 
-# 9. FASE 3 – Reto Grupal
+### Evidencia requerida
+
+```text
+[ CAPTURA 12 ]
+Mostrar:
+- Menú interactivo ejecutándose.
+- Opciones visibles en consola.
+```
 
 ---
 
-## 9.1 Transferencia del Script Remoto
+# FASE 3: Reto Grupal
 
-*(Proceso realizado desde el Nodo 1 – Usuario: ruls)*
+---
+
+## 4.13. Script de Despliegue Remoto
+
+Se creó un script para desplegar automáticamente contenido web en el servidor remoto.
+
+Archivo creado en Nodo 1 (ruls):
+
+```bash
+nano ~/grupo_deploy.sh
+```
+
+Posteriormente se transfirió al Nodo 2 mediante SCP.
+
+Comando utilizado:
 
 ```bash
 scp -O -i ~/.ssh/id_lab61 -P 2222 ~/grupo_deploy.sh adalidgt@10.100.15.211:/tmp/grupoX_deploy.sh
@@ -648,14 +562,22 @@ scp -O -i ~/.ssh/id_lab61 -P 2222 ~/grupo_deploy.sh adalidgt@10.100.15.211:/tmp/
 
 ---
 
-📸 **CAPTURA REQUERIDA:**
-Transferencia exitosa del archivo mediante `scp`.
+### Evidencia requerida
+
+```text
+[ CAPTURA 13 ]
+Mostrar:
+- Transferencia exitosa del archivo mediante SCP.
+- Uso del parámetro -P 2222 y -O.
+```
 
 ---
 
-## 9.2 Ejecución del Deploy Remoto
+## 4.14. Despliegue Remoto en Nodo 2
 
-*(Proceso realizado en el Nodo 2 – Usuario: adalidgt)*
+El administrador secundario ejecutó el script recibido.
+
+Comandos ejecutados en Nodo 2 (adalidgt):
 
 ```bash
 cd /tmp
@@ -665,28 +587,35 @@ sudo ./grupoX_deploy.sh GrupoX Ruls Adalid
 
 ---
 
-📸 **CAPTURA REQUERIDA:**
-Resultado del despliegue remoto ejecutado exitosamente.
+### Evidencia requerida
+
+```text
+[ CAPTURA 14 ]
+Mostrar:
+- Ejecución correcta del deploy.
+- Sitio web generado en /var/www/.
+```
 
 ---
 
-## 9.3 Monitoreo Remoto de Nginx (Health Check Cruzado)
+## 4.14.b. Monitoreo Remoto de Nginx (Health Check Cruzado)
 
-Desde el servidor secundario (Nodo 2), se implementó un script de auditoría para verificar el estado de publicación del servidor web del Nodo 1.
+Desde el Nodo 2 se implementó un script adicional para verificar el estado del servidor web del compañero.
 
 ---
 
 ### Script creado en Nodo 2 (adalidgt)
 
+Archivo:
+
 ```bash
 sudo nano /opt/admin_scripts/health_check_cruzado.sh
 ```
 
-### Código implementado
+Código implementado:
 
 ```bash
 #!/bin/bash
-
 IP_COMPANERO="10.100.15.210"
 
 if curl -s -o /dev/null -w "%{http_code}" http://$IP_COMPANERO | grep -q "200"; then
@@ -696,7 +625,7 @@ else
 fi
 ```
 
-### Ejecución
+Permisos y ejecución:
 
 ```bash
 sudo chmod +x /opt/admin_scripts/health_check_cruzado.sh
@@ -705,113 +634,123 @@ sudo chmod +x /opt/admin_scripts/health_check_cruzado.sh
 
 ---
 
-📸 **CAPTURA EXTRA:**
-Mostrar mensaje:
+### Evidencia requerida
 
 ```text
-[OK] Servidor web del compa responde correctamente.
+[ CAPTURA EXTRA ]
+Mostrar:
+- Mensaje:
+  [OK] Servidor web del compa responde correctamente.
 ```
 
 ---
 
-## 9.4 Inventario Maestro Automatizado
+## 4.15. Inventario Maestro Automatizado
 
-*(Proceso realizado desde el Nodo 1 – Usuario: ruls)*
+Finalmente, se implementó un sistema de inventario capaz de:
+
+- Verificar conectividad ICMP
+- Validar acceso SSH
+- Confirmar estado del servicio Nginx
+- Generar reportes automáticos
+
+Archivo creado en Nodo 1:
 
 ```bash
-chmod +x ~/inventory.sh
-./inventory.sh
+nano ~/inventory.sh
 ```
+
+El script utilizó:
+
+- `ping`
+- `nc`
+- `ssh`
+- `systemctl`
+- generación automática de reportes
 
 ---
 
-## Evidencia requerida y Análisis Técnico
+### Evidencia requerida y análisis técnico
 
 ```text
 [ CAPTURA 15 ]
-
 Mostrar reporte generado donde se observe:
 
-- Servidor 10.100.15.210 (Nodo 1):
+- Servidor 10.100.15.210:
   Ping OK
   SSH(22) OK
 
-- Servidor 10.100.15.211 (Nodo 2):
+- Servidor 10.100.15.211:
   Ping OK
   SSH(22) FAIL
+
+Nota Técnica:
+El resultado [FAIL] SSH(22) en el Nodo 2 representa un falso positivo esperado, ya que el servicio SSH fue reconfigurado para trabajar exclusivamente sobre el puerto 2222 por motivos de seguridad.
 ```
 
-### Nota Técnica
+---
 
-El resultado:
+# 5. Resultados Obtenidos
 
-```text
-[FAIL] SSH(22)
-```
+Durante el desarrollo del laboratorio se logró implementar exitosamente un entorno funcional de automatización y administración Linux mediante Bash Scripting.
 
-observado en el Nodo 2 (`10.100.15.211`) representa un falso positivo esperado.
+Entre los principales resultados obtenidos destacan:
 
-El script de inventario escanea inicialmente el puerto estándar SSH (22/TCP). Sin embargo, durante la Fase 1 del laboratorio, el servidor secundario fue reconfigurado para escuchar exclusivamente en el puerto personalizado `2222/TCP`.
+- Comunicación estable entre ambos nodos mediante red Hotspot.
+- Automatización de creación de usuarios y grupos.
+- Monitoreo automático del estado del sistema.
+- Configuración exitosa de acceso SSH seguro.
+- Transferencia remota automatizada de scripts.
+- Implementación de scripts de inventario y auditoría.
+- Despliegue remoto exitoso mediante SCP y SSH.
 
-Como consecuencia:
-
-* El puerto 22 aparece inaccesible correctamente.
-* El servicio SSH continúa funcionando normalmente en el puerto 2222.
-* La política de seguridad aplicada fue exitosa.
+Asimismo, se fortalecieron habilidades prácticas relacionadas con troubleshooting, administración Linux y automatización de tareas reales.
 
 ---
 
-# 10. Resultados Obtenidos
+# 6. Conclusiones
 
-Durante el desarrollo del laboratorio se lograron implementar satisfactoriamente todos los objetivos planteados:
+El laboratorio permitió comprender la importancia de la automatización dentro de la administración moderna de sistemas Linux. Mediante Bash Scripting fue posible reducir tareas repetitivas y centralizar procesos administrativos de manera eficiente.
 
-* Comunicación remota segura mediante SSH.
-* Automatización de tareas administrativas.
-* Gestión masiva de usuarios mediante CSV.
-* Health checks automáticos.
-* Monitoreo cruzado entre servidores.
-* Transferencia remota automatizada.
-* Inventario de infraestructura distribuida.
+La práctica también ayudó a reforzar conceptos relacionados con:
 
----
+- Configuración de redes Linux
+- Administración de servicios
+- Seguridad básica mediante SSH
+- Uso de herramientas de monitoreo
+- Automatización de despliegues remotos
 
-# 11. Conclusiones
-
-El Laboratorio 6.1 permitió comprender la importancia de la automatización dentro de entornos Linux modernos. La implementación de scripts Bash facilitó la administración del sistema, reduciendo tiempos operativos y permitiendo realizar verificaciones automáticas sobre servicios críticos.
-
-Asimismo, la práctica fortaleció conocimientos relacionados con:
-
-* Administración Linux.
-* Bash scripting.
-* SSH y autenticación por llaves.
-* Monitoreo automatizado.
-* Troubleshooting de red.
-* Gestión remota de infraestructura.
+Finalmente, el trabajo colaborativo permitió integrar conocimientos tanto de administración local como de comunicación remota entre servidores Linux.
 
 ---
 
-# 12. Reflexiones Finales
+# 7. Dificultades Encontradas
 
-La automatización mediante Bash Scripting constituye una herramienta esencial para administradores de sistemas Linux. El laboratorio demostró cómo pequeños scripts pueden transformarse en soluciones completas para monitoreo, mantenimiento y despliegue distribuido.
+Durante la práctica se presentaron algunos inconvenientes técnicos, entre ellos:
 
-La implementación de autenticación SSH mediante llaves y el monitoreo cruzado permitieron desarrollar una infraestructura más segura y eficiente.
+- Problemas iniciales de conectividad por configuración incorrecta de Netplan.
+- Rechazo de conexiones SSH debido al cambio de puerto.
+- Errores en SCP relacionados con el subsistema SFTP.
+- Problemas de permisos en algunos scripts Bash.
+
+Todos estos inconvenientes fueron solucionados mediante pruebas progresivas y revisión de logs del sistema.
 
 ---
 
-# 13. Anexos
+# 8. Anexos
 
-## 13.1 Scripts Implementados
+## Scripts Implementados
 
-* `01_intro.sh`
-* `02_check.sh`
-* `03_pipes.sh`
-* `04_summarize_logs.sh`
-* `05_user_manager.sh`
-* `log_cleanup.sh`
-* `06_check_system.sh`
-* `07_admin_menu.sh`
-* `grupo_deploy.sh`
-* `inventory.sh`
-* `health_check_cruzado.sh`
+- `01_intro.sh`
+- `02_check.sh`
+- `03_pipes.sh`
+- `04_summarize_logs.sh`
+- `05_user_manager.sh`
+- `log_cleanup.sh`
+- `06_check_system.sh`
+- `07_admin_menu.sh`
+- `grupoX_deploy.sh`
+- `inventory.sh`
+- `health_check_cruzado.sh`
 
 ---
