@@ -11,8 +11,8 @@
 **Grupo:** [Completar]  
 
 ### Integrantes
-- Dylan Huayta Fuertes  
-- [Nombre del compañero]
+- Huayta Fuertes Dylan
+- Gutierrez Torricos Adalid
 
 ---
 
