@@ -1,4 +1,4 @@
-<img width="574" height="195" alt="image" src="https://github.com/user-attachments/assets/88882c55-d5b7-4ba6-b873-d0b51eee1100" /># Informe de Laboratorio 6.1  
+# Informe de Laboratorio 6.1  
 ## Automatización y Administración de Sistemas Linux con Bash Scripting
 
 **Universidad:** Universidad Mayor, Real y Pontificia de San Francisco Xavier de Chuquisaca  
@@ -578,12 +578,7 @@ sudo chmod +x /opt/admin_scripts/health_check_cruzado.sh
 
 ### Evidencia requerida
 
-```text
-[ CAPTURA EXTRA ]
-Mostrar:
-- Mensaje:
-  [OK] Servidor web del compa responde correctamente.
-```
+<img width="562" height="78" alt="image" src="https://github.com/user-attachments/assets/fc5df90b-e355-4b8d-b9f8-990dc6e297ed" />
 
 ---
 
@@ -614,23 +609,7 @@ El script utilizó:
 
 ### Evidencia requerida y análisis técnico
 
-```text
-[ CAPTURA 15 ]
-Mostrar reporte generado donde se observe:
-
-- Servidor 10.100.15.210:
-  Ping OK
-  SSH(22) OK
-
-- Servidor 10.100.15.211:
-  Ping OK
-  SSH(22) FAIL
-
-Nota Técnica:
-El resultado [FAIL] SSH(22) en el Nodo 2 representa un falso positivo esperado, ya que el servicio SSH fue reconfigurado para trabajar exclusivamente sobre el puerto 2222 por motivos de seguridad.
-```
-
----
+<img width="462" height="243" alt="image" src="https://github.com/user-attachments/assets/cc6aa049-b228-4cca-8d67-d4779ac9c9b6" />
 
 # 5. Resultados Obtenidos
 
