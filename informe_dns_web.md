@@ -3,12 +3,11 @@
 
 **Universidad:** Universidad Mayor, Real y Pontificia de San Francisco Xavier de Chuquisaca  
 **Facultad:** Facultad de Ciencias y Tecnología  
-**Carrera:** Ingeniería en Ciencias de la Computación  
+**Carrera:** Ingeniería en Ciencias de la Computación-TIS, Ingenieria en Sistemas  
 **Asignatura:** SIS313 – Infraestructura, Plataformas Tecnológicas y Redes  
 **Docente:** Ing. Marcelo Quispe Ortega  
 **Laboratorio:** Laboratorio 6.1 – Automatización y Administración de Sistemas Linux  
-**Gestión:** 1/2026  
-**Grupo:** [Completar]  
+**Gestión:** 1/2026   
 
 ### Integrantes
 - Huayta Fuertes Dylan
