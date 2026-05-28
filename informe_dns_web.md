@@ -1,361 +1,863 @@
-# INFORME DE LABORATORIO: SERVICIOS DE RED (DNS Y WEB)
+# Informe de Laboratorio 6.1: Automatización de Administración de Sistemas Linux con Bash Scripting
 
-**Materia:** SIS313 - Infraestructura de Redes y Servicios  
-**Estudiante:** Huayta Fuertes Dylan  
-**Docente:** Ing. Marcelo Quispe Ortega  
+## Universidad Mayor, Real y Pontificia de San Francisco Xavier de Chuquisaca
 
----
+### Facultad de Ciencias y Tecnología
 
-## 1. Configuración del servidor DNS
+### Carrera: Ingeniería en Ciencias de la Computación
 
-Primero se configuró la parte del servidor DNS, el cual funcionará como servidor con salida a internet.  
-Para ello, se habilitaron **dos adaptadores de red**:
+### Asignatura: SIS313 – Infraestructura, Plataformas Tecnológicas y Redes
 
-- **Adaptador NAT:** destinado a la salida a internet.
-- **Adaptador Interno:** utilizado para la comunicación interna entre las demás máquinas virtuales.
-- <img width="886" height="295" alt="image" src="https://github.com/user-attachments/assets/19fb76dd-4940-4ca6-8275-1e8637dafc28" />
-- <img width="863" height="409" alt="image" src="https://github.com/user-attachments/assets/342a791d-0134-4cc8-828c-04bef5f694c8" />
+### Docente: Ing. Marcelo Quispe Ortega
 
+### Laboratorio: 6.1 – Automatización de Administración Linux y Despliegue Remoto
 
-Posteriormente, se realizó la configuración de puertos en el adaptador NAT.
+### Gestión: 1/2026
 
-### Configuración de dirección IP
+### Modalidad: Práctica Grupal
 
-Se configuró la dirección IP en el archivo YAML correspondiente.
-<img width="345" height="353" alt="image" src="https://github.com/user-attachments/assets/383474d8-3afd-4c81-bc74-bbf48330e673" />
+### Integrantes:
 
-
-Después de ello, se ejecutó el siguiente comando para verificar que no existieran errores y aplicar la configuración:
-
-```bash
-sudo netplan try
-```
-
-Finalmente, mediante:
-
-```bash
-ip a
-```
-
-se comprobó que la dirección IP del adaptador interno fue modificada correctamente.
-<img width="886" height="522" alt="image" src="https://github.com/user-attachments/assets/27604af2-bdba-455d-8573-58f80456de9d" />
+* Ruls
+* AdalidGT
 
 ---
 
-## 2. Habilitación del reenvío de paquetes
+# 1. Introducción
 
-Se eliminó el símbolo `#` de la línea correspondiente al **IP forwarding** dentro del archivo:
+El presente laboratorio tuvo como finalidad aplicar técnicas de automatización sobre sistemas GNU/Linux utilizando Bash Scripting como herramienta principal de administración. Durante el desarrollo de la práctica se implementaron scripts para monitoreo, mantenimiento preventivo, auditoría de servicios, automatización de usuarios y despliegue remoto de aplicaciones.
 
-```bash
-/etc/sysctl.conf
-```
-<img width="886" height="522" alt="image" src="https://github.com/user-attachments/assets/17137479-9e60-43e9-b80d-4087b805157f" />
+La práctica se desarrolló utilizando dos máquinas físicas distintas conectadas mediante una red Hotspot local, ejecutando Ubuntu Server como sistema operativo base. La administración remota se realizó utilizando SSH con autenticación mediante llaves criptográficas Ed25519.
 
-Con esta configuración se permitió la salida a internet desde las demás máquinas virtuales.
-
-Posteriormente, se configuraron las reglas necesarias en **iptables** para permitir el enrutamiento adecuado de tráfico interno hacia internet.
-<img width="841" height="317" alt="image" src="https://github.com/user-attachments/assets/433f7b74-e8ea-4a69-bdeb-a560c013d1ea" />
-
+Además de la automatización local, se realizó un reto de integración grupal donde un nodo principal administró remotamente otro servidor mediante scripts automatizados, verificando conectividad, servicios activos y despliegue de contenido web.
 
 ---
 
-## 3. Instalación y configuración de Bind9
+# 2. Objetivos del Laboratorio
 
-Se realizó la instalación del servicio **Bind9** para la administración de dominios DNS.
-<img width="742" height="139" alt="image" src="https://github.com/user-attachments/assets/c02001ac-0a35-4a8b-95a5-629cc4fe7014" />
+## Objetivo General
 
+Implementar soluciones automatizadas de administración y monitoreo sobre servidores Linux utilizando Bash Scripting y herramientas nativas del sistema operativo.
 
-Luego, se agregó el dominio y la ruta de configuración correspondiente en el archivo:
+## Objetivos Específicos
 
-```bash
-/etc/bind/named.conf.local
-```
-<img width="425" height="120" alt="image" src="https://github.com/user-attachments/assets/6f04d5e6-9c7f-4e9e-b7c6-b8713367f161" />
-
-Posteriormente, se realizó una copia del archivo de configuración por defecto para crear una configuración personalizada.
-
-<img width="747" height="47" alt="image" src="https://github.com/user-attachments/assets/bf15e07d-697b-418c-85c4-966df475af43" />
-
-<img width="713" height="375" alt="image" src="https://github.com/user-attachments/assets/2dd665ba-7537-41b0-8d24-abc396577e43" />
-
-Para validar que no existieran errores de sintaxis se verificó el archivo configurado.
-
-<img width="655" height="88" alt="image" src="https://github.com/user-attachments/assets/147f59f9-6a14-4b40-b29d-b15acff3ab2c" />
-
-Finalmente, se reinició el servicio Bind9 para aplicar los cambios:
-
-```bash
-sudo systemctl restart bind9
-```
-
-<img width="886" height="501" alt="image" src="https://github.com/user-attachments/assets/0a2b0e52-b3b2-4963-ae47-cbab4a4d0880" />
-
-
-Después se verificó que el servidor estuviera escuchando peticiones mediante el puerto **53**.
-
-
----<img width="886" height="76" alt="image" src="https://github.com/user-attachments/assets/57f9dec7-5647-45cb-9b8d-164595da0039" />
-
-
-## 4. Configuración del servidor web
-
-Se asignó un adaptador interno al servidor web y se configuró su dirección IP mediante el archivo YAML.
-
-<img width="381" height="378" alt="image" src="https://github.com/user-attachments/assets/6c3849a9-0e0f-4f4d-9a59-bce852093880" />
-
-Una vez aplicada la configuración, se realizaron pruebas de conectividad con el gateway.
-
-<img width="800" height="225" alt="image" src="https://github.com/user-attachments/assets/7cbdeb6a-aa63-466b-8594-eb0936272947" />
-
-También se verificó que la salida a internet fuera exitosa.
-
-<img width="794" height="231" alt="image" src="https://github.com/user-attachments/assets/6ac2913b-c3a4-40cb-b110-9ae33286b2ce" />
-
-### Instalación de NGINX
-
-Se instaló y configuró el servidor web **NGINX**.
-
-<img width="886" height="54" alt="image" src="https://github.com/user-attachments/assets/0082df87-a38a-41e5-bc5e-cca0f39892a0" />
-
-Posteriormente, se creó un nuevo bloque de configuración dentro del archivo:
-
-```bash
-/etc/nginx/sites-available/lab42.local
-```
-
-<img width="563" height="281" alt="image" src="https://github.com/user-attachments/assets/c7b054b8-9e22-4870-b86f-90646bd14438" />
-
-Luego:
-
-- Se activó el sitio.
-- Se creó el contenido que se visualizaría en la página web.
-- Se verificó la correcta configuración de los archivos.
-- Se reinició NGINX para aplicar los cambios.
-
-<img width="886" height="78" alt="image" src="https://github.com/user-attachments/assets/601e737a-015a-4105-b2c5-318c36aea0b7" />
-
-<img width="847" height="102" alt="image" src="https://github.com/user-attachments/assets/d61908eb-997e-407a-afce-6e768c111dbf" />
+* Automatizar tareas administrativas mediante scripts Bash.
+* Implementar verificación y monitoreo de servicios Linux.
+* Gestionar usuarios y grupos utilizando archivos CSV.
+* Automatizar limpieza de logs y mantenimiento preventivo.
+* Configurar acceso remoto seguro mediante SSH.
+* Implementar despliegue remoto automatizado entre servidores.
+* Crear un sistema de inventario y auditoría de infraestructura.
 
 ---
 
-## 5. Configuración de la máquina cliente
+# 3. Topología de Red y Entorno de Trabajo
 
-Se configuró la dirección IP de la máquina virtual cliente.
+Para el desarrollo del laboratorio se utilizó una red local Hotspot entre dos equipos físicos.
 
-<img width="378" height="402" alt="image" src="https://github.com/user-attachments/assets/a58de97c-d402-4c95-b2dc-aedfaa522e01" />
+| Nodo   | Función                  | Usuario  | Dirección IP  | Puerto SSH |
+| ------ | ------------------------ | -------- | ------------- | ---------- |
+| Nodo 1 | Administrador Principal  | ruls     | 10.100.15.210 | 22         |
+| Nodo 2 | Administrador Secundario | adalidgt | 10.100.15.211 | 2222       |
 
-Posteriormente, se realizaron pruebas de resolución DNS mediante:
+## Parámetros de Red
 
-```bash
-dig
-```
-
-<img width="886" height="711" alt="image" src="https://github.com/user-attachments/assets/8a5a604f-ce7d-445d-afe9-ca1faf4502b3" />
-
-y
-
-```bash
-nslookup
-```
-
-Los resultados mostraron que la resolución del dominio se realizó correctamente.
-
-Asimismo, se comprobó que la página web resolvía adecuadamente el nombre configurado.
-
-<img width="569" height="56" alt="image" src="https://github.com/user-attachments/assets/887c3629-f7fc-412e-8775-8530940fa538" />
+* Máscara de Subred: `255.255.255.0 (/24)`
+* Gateway: `10.100.15.179`
+* DNS Primario: `8.8.8.8`
+* DNS Secundario: `1.1.1.1`
 
 ---
 
-## 6. Parte práctica en grupo
+# 4. Desarrollo del Laboratorio
 
-### Configuración DNS grupal
+# FASE 1: Preparación del Entorno y Configuración de Red
 
-Para esta práctica, el servidor DNS utilizó la dirección IP:
+---
+
+## 4.1. Configuración de IP Estática mediante Netplan
+
+Con el objetivo de garantizar conectividad permanente y evitar cambios dinámicos de direccionamiento IP, se configuraron direcciones IPv4 estáticas en ambos servidores utilizando Netplan.
+
+---
+
+### Configuración realizada en el Nodo 1 (Servidor Principal – ruls)
+
+Se editó el archivo de configuración:
+
+```bash
+sudo nano /etc/netplan/00-installer-config.yaml
+```
+
+Contenido configurado:
+
+```yaml
+network:
+  version: 2
+  ethernets:
+    enp0s3:
+      dhcp4: no
+      addresses:
+        - 10.100.15.210/24
+      routes:
+        - to: default
+          via: 10.100.15.179
+      nameservers:
+        addresses: [8.8.8.8, 1.1.1.1]
+```
+
+Posteriormente se aplicó la configuración:
+
+```bash
+sudo netplan apply
+```
+
+---
+
+### Configuración realizada en el Nodo 2 (Servidor Secundario – adalidgt)
+
+Se repitió el mismo procedimiento modificando únicamente la dirección IP:
+
+```yaml
+addresses:
+  - 10.100.15.211/24
+```
+
+Aplicación de cambios:
+
+```bash
+sudo netplan apply
+```
+
+---
+
+### Evidencia requerida
 
 ```text
-10.140.170.200
+[ CAPTURA 1 ]
+Mostrar comando:
+ip addr
+
+Debe observarse:
+- IP 10.100.15.210 configurada correctamente en Nodo 1
+- IP 10.100.15.211 configurada correctamente en Nodo 2
 ```
-
-con el dominio:
-
-```text
-los-pepes.red
-```
-
-<img width="369" height="352" alt="image" src="https://github.com/user-attachments/assets/693dcd4c-9367-42cc-ba5f-79b99aae3954" />
-
-Se realizó la configuración de Bind9 creando dos archivos:
-
-- Uno para la resolución directa del dominio.
-- Otro para la resolución inversa mediante dirección IP.
-
-<img width="488" height="234" alt="image" src="https://github.com/user-attachments/assets/24e032ef-347c-4f2f-9d74-cb1c061f5f0c" />
-
-<img width="820" height="323" alt="image" src="https://github.com/user-attachments/assets/85616541-36ad-4fb0-be1f-30f2ddfbecbd" />
-
-<img width="841" height="300" alt="image" src="https://github.com/user-attachments/assets/4e799139-bf77-44c9-a50a-b2fcb0f49742" />
-
-<img width="688" height="208" alt="image" src="https://github.com/user-attachments/assets/e4dcd338-946c-4af5-94a9-8393124a206d" />
-
-
-
-Finalmente, se realizaron verificaciones mediante consultas DNS, comprobando el correcto funcionamiento del dominio configurado.
 
 ---
-## 2. Configuración Inicial de Red del Servidor Web
 
-Como primer paso se configuró manualmente la interfaz de red del
-servidor web mediante Netplan, asignando la IP estática correspondiente
-dentro del segmento proporcionado para el grupo.
-<img width="962" height="196" alt="22  ping web - dns (grupal)" src="https://github.com/user-attachments/assets/2961e680-87ae-40d2-825f-44be4b97fef0" />
-<img width="961" height="401" alt="20  Configuración yaml web (grupal)" src="https://github.com/user-attachments/assets/d343b769-7e5f-4dbe-aaab-4c84a8d890bc" />
+## 4.2. Instalación de Dependencias Base
 
-La dirección asignada al servidor web fue:
+Se instalaron los paquetes necesarios para el funcionamiento de los servicios web, auditoría de red y conectividad remota.
 
-`10.140.170.201/24`
+---
 
-El gateway y servidor DNS utilizado fue:
+### Instalación realizada en el Nodo 1 (ruls)
 
-`10.140.170.200`
+```bash
+sudo apt update
+sudo apt install nginx netcat-openbsd -y
+```
 
-Para ello se modificó el archivo `/etc/netplan/50-cloud-init.yaml`,
-donde se estableció que la interfaz `enp0s3` trabajara sin DHCP,
-utilizando direccionamiento manual, nameserver y ruta por defecto hacia
-el DNS. Posteriormente se aplicaron los cambios para activar la nueva
-configuración.
+Se generó tráfico local para producir registros en los logs de Nginx:
 
-Tras esto se verificó exitosamente mediante `ip a` que la máquina
-mostrara correctamente la IP asignada, confirmando así que el servidor
-web ya pertenecía correctamente a la red grupal.
+```bash
+curl -s http://localhost > /dev/null
+curl -s http://localhost > /dev/null
+```
 
-------------------------------------------------------------------------
+---
 
-## 3. Validación de Conectividad con el Servidor DNS
+### Instalación realizada en el Nodo 2 (adalidgt)
 
-Una vez configurada la red, se realizaron pruebas de conectividad usando
-`ping` hacia la IP del compañero responsable del DNS (`10.140.170.200`).
+```bash
+sudo apt update
+sudo apt install openssh-server nginx netcat-openbsd -y
+```
 
-<img width="962" height="196" alt="22  ping web - dns (grupal)" src="https://github.com/user-attachments/assets/9ec839d0-303c-475f-959a-e54762307559" />
+Se habilitó el servicio SSH:
 
+```bash
+sudo systemctl start ssh
+sudo systemctl enable ssh
+```
 
-Los resultados fueron exitosos, mostrando 0% de pérdida de paquetes y
-tiempos de respuesta estables, confirmando que ambas máquinas podían
-comunicarse correctamente dentro de la red.
+---
 
-Esta validación fue esencial, ya que garantizó que el servidor web
-pudiera depender del DNS para resolución de nombres y acceso grupal.
+### Cambio del puerto SSH en Nodo 2
 
-------------------------------------------------------------------------
+Se modificó el archivo:
 
-## 4. Instalación del Servidor Nginx
+```bash
+sudo nano /etc/ssh/sshd_config
+```
 
-Con la conectividad validada, se procedió a instalar Nginx como servicio
-web principal.
+Se cambió:
 
-Durante el primer intento se presentó un bloqueo temporal del sistema
-debido a procesos automáticos de actualización (`unattended-upgrades`),
-impidiendo la instalación inmediata. Luego de esperar la liberación del
-bloqueo, se ejecutó nuevamente la instalación, logrando completar
-exitosamente la descarga, desempaquetado e instalación del paquete Nginx
-junto con `nginx-common`.
+```text
+#Port 22
+```
 
-Posteriormente se verificó que Nginx ya estuviera instalado
-correctamente y sin errores adicionales.
+Por:
 
-Una vez instalado, se habilitó el servicio con inicio automático
-utilizando `systemctl`, asegurando que Nginx se ejecutara desde el
-arranque del sistema operativo.
+```text
+Port 2222
+```
 
-------------------------------------------------------------------------
+Reinicio del servicio:
 
-## 5. Configuración del Virtual Host
+```bash
+sudo systemctl restart ssh
+```
 
-Después de instalar Nginx, se creó la configuración personalizada del
-sitio web en `/etc/nginx/sites-available/lab42.local`.
+---
 
-Aunque inicialmente el laboratorio individual trabajó con `lab42.local`,
-para la práctica grupal se adaptó el funcionamiento al dominio real
-asignado:
+### Evidencia requerida
 
-`los-pepes.red`
+```text
+[ CAPTURA 2 ]
+Mostrar:
+sudo systemctl status ssh
 
-Dentro de la configuración del servidor se estableció:
+Debe visualizarse:
+- Servicio SSH activo
+- Puerto configurado en 2222
+```
 
--   Escucha en puerto 80\
--   `server_name` para dominio principal y `www`\
--   Directorio raíz `/var/www/lab42.local`\
--   Archivo principal `index.html`\
--   Validación de recursos mediante `try_files`
+---
 
-Esta estructura permitió que Nginx respondiera correctamente a
-solicitudes realizadas tanto por IP como por nombre de dominio.
+# FASE 2: Desarrollo de Scripts de Administración
 
-Luego se verificó la sintaxis de Nginx mediante `sudo nginx -t`,
-obteniendo como resultado:
-<img width="969" height="80" alt="24  nginx -t (grupal)" src="https://github.com/user-attachments/assets/6fadf206-8e93-4b16-80aa-fb6a5a454d95" />
+---
 
+## 4.3. Creación del Entorno de Trabajo
 
-`syntax is ok`\
-`test is successful`
+Se creó una estructura organizada de directorios destinada al almacenamiento de scripts administrativos y respaldos del sistema.
 
-Esto confirmó que no existían errores en la configuración antes de
-reiniciar el servicio.
+---
 
-------------------------------------------------------------------------
+### Configuración realizada en el Nodo 1 (ruls)
 
-## 6. Integración con DNS y Resolución de Dominio
+```bash
+sudo mkdir -p /opt/admin_scripts
+sudo mkdir -p /var/backups/data_center
+sudo chmod 755 /opt/admin_scripts
+```
 
-Con Nginx operativo, se procedió a validar la correcta resolución DNS
-usando:
+---
 
-`nslookup www.los-pepes.red 10.140.170.200`
+### Evidencia requerida
 
-El resultado devolvió exitosamente:
+```text
+[ CAPTURA 3 ]
+Mostrar:
+ls -ld /opt/admin_scripts
+ls -ld /var/backups/data_center
+```
 
-`www.los-pepes.red -> 10.140.170.201`
+---
 
-Esto confirmó que el servidor DNS del compañero estaba enlazando
-correctamente el dominio grupal hacia el servidor web configurado.
+## 4.4. Configuración de Acceso SSH sin Contraseña
 
-Esta fase fue clave, ya que permitió vincular infraestructura DNS + Web
-en un entorno funcional completo.
+Se implementó autenticación mediante llaves criptográficas Ed25519 para automatizar el acceso remoto seguro entre servidores.
 
-------------------------------------------------------------------------
+---
 
-## 7. Validación desde Navegador
+### Generación de llaves (Nodo 1 – ruls)
 
-Finalmente, se realizaron pruebas desde navegador utilizando:
+```bash
+ssh-keygen -t ed25519 -C "admin@lab61" -f ~/.ssh/id_lab61
+```
 
--   `http://10.140.170.201`
--   `http://los-pepes.red`
+---
 
-En ambos casos el sistema mostró correctamente la página configurada,
-desplegando el mensaje:
+### Copia de llave pública al Nodo 2
 
-<img width="960" height="334" alt="25  navegador funcionando (grupal)" src="https://github.com/user-attachments/assets/94b8e551-516c-4d26-b914-6c6393bba0ba" />
+```bash
+ssh-copy-id -p 2222 -i ~/.ssh/id_lab61.pub adalidgt@10.100.15.211
+```
 
+---
 
-**Bienvenido a www.los-pepes.red**\
-**Servidor Web funcionando correctamente**\
-**Web: Adalid Gutiérrez Torricos**\
-**DNS: Dylan Huayta Fuertes**
+### Prueba de conexión remota
 
-Esto confirmó que:
+```bash
+ssh -i ~/.ssh/id_lab61 -p 2222 adalidgt@10.100.15.211
+```
 
--   Nginx servía correctamente el contenido HTML\
--   El dominio resolvía adecuadamente\
--   La integración DNS-Web era completamente funcional\
--   El laboratorio grupal fue completado con éxito
+---
 
-## 7. Conclusiones
+### Evidencia requerida
 
-Durante el desarrollo de este laboratorio se logró implementar correctamente un entorno funcional de servicios de red, integrando:
+```text
+[ CAPTURA 4 ]
+Mostrar:
+Conexión SSH exitosa desde Nodo 1 hacia Nodo 2 sin solicitar contraseña
+```
 
-- Configuración de servidor DNS
-- Enrutamiento hacia internet
-- Servidor web con NGINX
-- Resolución de nombres desde cliente
+---
 
-Se comprobó la correcta interacción entre todos los componentes mediante pruebas prácticas de conectividad y resolución de dominios.
+## 4.5. Script de Bienvenida Administrativa
 
-Esta práctica permitió reforzar conocimientos sobre administración de redes, configuración de servicios y resolución de problemas en entornos virtualizados.
+Se desarrolló un script inicial encargado de registrar accesos administrativos en un archivo de logs.
+
+---
+
+### Script creado en Nodo 1 (ruls)
+
+Archivo:
+
+```bash
+sudo nano /opt/admin_scripts/01_intro.sh
+```
+
+Código:
+
+```bash
+#!/bin/bash
+LOG_FILE="/tmp/admin_access.log"
+NOMBRE=$1
+ROL=$2
+
+echo "========================================="
+echo "¡Bienvenido, $NOMBRE! Su rol es $ROL."
+echo "========================================="
+
+echo "$(date '+%Y-%m-%d %H:%M:%S') - Usuario del sistema: $USER. Nombre: $NOMBRE, Rol: $ROL." >> $LOG_FILE
+
+echo "Último registro añadido a $LOG_FILE:"
+tail -n 1 $LOG_FILE
+```
+
+Permisos:
+
+```bash
+sudo chmod +x /opt/admin_scripts/01_intro.sh
+```
+
+Prueba:
+
+```bash
+/opt/admin_scripts/01_intro.sh "ruls" "Administrador"
+```
+
+---
+
+### Evidencia requerida
+
+```text
+[ CAPTURA 5 ]
+Mostrar:
+Ejecución exitosa del script 01_intro.sh
+y contenido generado en /tmp/admin_access.log
+```
+
+---
+
+## 4.6. Verificación de Archivos Críticos y Disco
+
+El script permitió verificar la existencia de archivos importantes, directorios web y el uso de disco del sistema.
+
+---
+
+### Script creado en Nodo 1 (ruls)
+
+Archivo:
+
+```bash
+sudo nano /opt/admin_scripts/02_check.sh
+```
+
+---
+
+### Funcionalidades implementadas
+
+* Verificación del archivo `/tmp/admin_access.log`
+* Validación del directorio `/var/www/html`
+* Creación automática del directorio en caso de no existir
+* Auditoría de uso del disco principal
+
+---
+
+### Ejecución
+
+```bash
+sudo chmod +x /opt/admin_scripts/02_check.sh
+/opt/admin_scripts/02_check.sh
+```
+
+---
+
+### Evidencia requerida
+
+```text
+[ CAPTURA 6 ]
+Mostrar:
+Resultado completo de la ejecución de 02_check.sh
+```
+
+---
+
+## 4.7. Auditoría de Puertos TCP mediante Pipes
+
+Se utilizó una cadena de comandos Linux para identificar los puertos TCP más utilizados del sistema.
+
+---
+
+### Script creado en Nodo 1 (ruls)
+
+Archivo:
+
+```bash
+sudo nano /opt/admin_scripts/03_pipes.sh
+```
+
+---
+
+### Comandos utilizados
+
+* `ss`
+* `grep`
+* `awk`
+* `cut`
+* `sort`
+* `uniq`
+
+---
+
+### Ejecución
+
+```bash
+sudo chmod +x /opt/admin_scripts/03_pipes.sh
+/opt/admin_scripts/03_pipes.sh
+```
+
+---
+
+### Evidencia requerida
+
+```text
+[ CAPTURA 7 ]
+Mostrar:
+Top 5 de puertos TCP detectados por el script
+```
+
+---
+
+## 4.8. Análisis de Logs utilizando Bucles
+
+Se desarrolló un sistema de lectura secuencial de logs mediante estructuras `for` y `while`.
+
+---
+
+### Script creado en Nodo 1 (ruls)
+
+Archivo:
+
+```bash
+sudo nano /opt/admin_scripts/04_summarize_logs.sh
+```
+
+---
+
+### Funciones implementadas
+
+* Conteo de líneas en logs de Nginx
+* Lectura automática del access.log
+* Conteo de respuestas HTTP 200
+
+---
+
+### Ejecución
+
+```bash
+sudo chmod +x /opt/admin_scripts/04_summarize_logs.sh
+sudo /opt/admin_scripts/04_summarize_logs.sh
+```
+
+---
+
+### Evidencia requerida
+
+```text
+[ CAPTURA 8 ]
+Mostrar:
+Resultado del conteo de logs y peticiones HTTP 200
+```
+
+---
+
+## 4.9. Gestión Masiva de Usuarios mediante CSV
+
+Se automatizó la creación de usuarios y grupos utilizando un archivo CSV como base de datos estructurada.
+
+---
+
+### Creación del archivo CSV (Nodo 1 – ruls)
+
+```bash
+sudo bash -c 'echo -e "ana_sistemas,sistemas\nluis_soporte,soporte\neva_sistemas,sistemas\ncarlos_redes,redes" > /opt/admin_scripts/usuarios.csv'
+```
+
+---
+
+### Script principal
+
+Archivo:
+
+```bash
+sudo nano /opt/admin_scripts/05_user_manager.sh
+```
+
+---
+
+### Funciones implementadas
+
+* Lectura automatizada del CSV
+* Validación de existencia de grupos
+* Validación de existencia de usuarios
+* Creación automática de cuentas Linux
+
+---
+
+### Ejecución
+
+```bash
+sudo chmod +x /opt/admin_scripts/05_user_manager.sh
+sudo /opt/admin_scripts/05_user_manager.sh
+```
+
+---
+
+### Evidencia requerida
+
+```text
+[ CAPTURA 9 ]
+Mostrar:
+Usuarios y grupos creados correctamente
+```
+
+---
+
+## 4.10. Limpieza Automatizada de Logs
+
+Se implementó un sistema de mantenimiento preventivo capaz de eliminar registros obsoletos automáticamente.
+
+---
+
+### Script creado en Nodo 1 (ruls)
+
+Archivo:
+
+```bash
+sudo nano /opt/admin_scripts/log_cleanup.sh
+```
+
+---
+
+### Funciones implementadas
+
+* Búsqueda de logs antiguos
+* Eliminación automática de archivos mayores a 30 días
+* Generación de reportes de limpieza
+
+---
+
+### Ejecución
+
+```bash
+sudo chmod +x /opt/admin_scripts/log_cleanup.sh
+sudo /opt/admin_scripts/log_cleanup.sh
+```
+
+---
+
+### Evidencia requerida
+
+```text
+[ CAPTURA 10 ]
+Mostrar:
+Reporte generado por log_cleanup.sh
+```
+
+---
+
+## 4.11. Health Check Automático
+
+Se desarrolló un sistema de monitoreo automático del servidor y sus servicios.
+
+---
+
+### Script creado en Nodo 1 (ruls)
+
+Archivo:
+
+```bash
+sudo nano /opt/admin_scripts/06_check_system.sh
+```
+
+---
+
+### Funciones implementadas
+
+* Verificación automática del servicio Nginx
+* Reinicio automático del servicio en caso de falla
+* Monitoreo de uso de disco
+* Monitoreo de memoria RAM
+
+---
+
+### Ejecución
+
+```bash
+sudo chmod +x /opt/admin_scripts/06_check_system.sh
+sudo /opt/admin_scripts/06_check_system.sh
+```
+
+---
+
+### Evidencia requerida
+
+```text
+[ CAPTURA 11 ]
+Mostrar:
+Resultado del monitoreo del sistema
+y contenido de /var/log/system_check.log
+```
+
+---
+
+## 4.12. Menú Interactivo de Administración
+
+Se creó una interfaz interactiva basada en Bash para centralizar todos los scripts administrativos.
+
+---
+
+### Creación del usuario administrador de menú
+
+```bash
+sudo useradd -m -s /bin/bash menu
+sudo passwd menu
+sudo usermod -aG sudo menu
+```
+
+---
+
+### Script del menú
+
+Archivo:
+
+```bash
+sudo nano /opt/admin_scripts/07_admin_menu.sh
+```
+
+---
+
+### Funciones del menú
+
+* Health Check
+* Gestión de usuarios
+* Visualización de logs
+* Interfaz interactiva permanente
+
+---
+
+### Configuración automática al iniciar sesión
+
+```bash
+sudo bash -c 'echo "bash /opt/admin_scripts/07_admin_menu.sh" >> /home/menu/.bashrc'
+```
+
+---
+
+### Evidencia requerida
+
+```text
+[ CAPTURA 12 ]
+Mostrar:
+Menú interactivo funcionando correctamente
+```
+
+---
+
+# FASE 3: Reto Grupal – Despliegue e Inventario Remoto
+
+---
+
+## 4.13. Creación del Script de Despliegue Remoto
+
+El Nodo 1 generó un script capaz de desplegar contenido HTML automáticamente en el servidor remoto.
+
+---
+
+### Script creado en Nodo 1 (ruls)
+
+Archivo:
+
+```bash
+nano ~/grupo_deploy.sh
+```
+
+---
+
+### Funciones implementadas
+
+* Creación automática de directorios web
+* Generación dinámica de archivos HTML
+* Registro de despliegues realizados
+
+---
+
+### Transferencia al Nodo 2
+
+```bash
+scp -O -i ~/.ssh/id_lab61 -P 2222 ~/grupo_deploy.sh adalidgt@10.100.15.211:/tmp/grupoX_deploy.sh
+```
+
+---
+
+### Evidencia requerida
+
+```text
+[ CAPTURA 13 ]
+Mostrar:
+Transferencia exitosa mediante SCP
+```
+
+---
+
+## 4.14. Ejecución Remota del Despliegue
+
+En el servidor secundario se ejecutó el script recibido desde el Nodo 1.
+
+---
+
+### Comandos ejecutados en Nodo 2 (adalidgt)
+
+```bash
+cd /tmp
+chmod +x grupoX_deploy.sh
+sudo ./grupoX_deploy.sh GrupoX Ruls Adalid
+```
+
+---
+
+### Evidencia requerida
+
+```text
+[ CAPTURA 14 ]
+Mostrar:
+Página HTML generada correctamente
+en /var/www/GrupoX
+```
+
+---
+
+## 4.15. Inventario Maestro Automatizado
+
+Finalmente se desarrolló un sistema centralizado de auditoría de infraestructura.
+
+---
+
+### Preparación de lista de servidores
+
+```bash
+echo -e "10.100.15.210\n10.100.15.211" > ~/servers.txt
+```
+
+---
+
+### Script creado en Nodo 1 (ruls)
+
+Archivo:
+
+```bash
+nano ~/inventory.sh
+```
+
+---
+
+### Funciones implementadas
+
+* Verificación ICMP (Ping)
+* Verificación TCP mediante Netcat
+* Verificación remota de Nginx vía SSH
+* Generación de reportes automáticos
+
+---
+
+### Ejecución final
+
+```bash
+chmod +x ~/inventory.sh
+./inventory.sh
+```
+
+---
+
+### Evidencia requerida
+
+```text
+[ CAPTURA 15 ]
+Mostrar:
+Reporte final exitoso con:
+- Ping OK
+- SSH(2222) OK
+- Nginx remoto activo
+```
+
+---
+
+# 5. Resultados Obtenidos
+
+Durante el desarrollo del laboratorio se logró implementar correctamente una infraestructura automatizada basada en scripts Bash. Se verificó el funcionamiento del monitoreo automático, la administración masiva de usuarios, la limpieza de logs y la auditoría remota de servicios.
+
+La integración grupal permitió demostrar la capacidad de administración distribuida entre dos nodos Linux utilizando autenticación segura mediante llaves SSH.
+
+---
+
+# 6. Problemas Encontrados y Soluciones Aplicadas
+
+| Problema                   | Solución                               |
+| -------------------------- | -------------------------------------- |
+| Conexión SSH rechazada     | Configuración correcta del puerto 2222 |
+| Error de transferencia SCP | Uso de bandera `-O`                    |
+| Permisos insuficientes     | Uso de `chmod +x` y sudo               |
+| Scripts no ejecutaban      | Corrección de rutas y permisos         |
+| SSH solicitaba contraseña  | Configuración de llaves Ed25519        |
+
+---
+
+# 7. Conclusiones
+
+* Bash Scripting permite automatizar múltiples tareas administrativas reduciendo el tiempo operativo.
+* SSH con autenticación mediante llaves mejora significativamente la seguridad y automatización.
+* Linux proporciona herramientas robustas para monitoreo y auditoría de infraestructura.
+* La automatización facilita el despliegue remoto y administración centralizada de servidores.
+* El trabajo grupal permitió simular escenarios reales de administración de sistemas distribuidos.
+
+---
+
+# 8. Anexos
+
+## Scripts Implementados
+
+* `01_intro.sh`
+* `02_check.sh`
+* `03_pipes.sh`
+* `04_summarize_logs.sh`
+* `05_user_manager.sh`
+* `log_cleanup.sh`
+* `06_check_system.sh`
+* `07_admin_menu.sh`
+* `grupo_deploy.sh`
+* `inventory.sh`
+
+---
+
+# 9. Referencias
+
+* Documentación Oficial Ubuntu Server
+* Manual de Bash Scripting GNU/Linux
+* OpenSSH Documentation
+* Netplan Documentation
+* Nginx Official Documentation
