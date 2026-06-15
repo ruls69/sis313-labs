@@ -208,67 +208,384 @@ gzip /backups/socdb_$(date +%Y%m%d_%H%M).sql
 gunzip -c /backups/socdb_latest.sql.gz | mysql -h 192.168.208.5 -u root -p socdb
 ```
 
-### 5.2.1 Implementación de Infraestructura de Aplicaciones (Integrante 1)
+# 5.2.1 Implementación de Infraestructura de Aplicaciones y Seguridad Perimetral (Integrante 1)
 
-La capa de aplicaciones fue diseñada bajo un modelo de alta disponibilidad utilizando un balanceador de carga NGINX y dos servidores de aplicación Node.js (APP1 y APP2), ambos administrados mediante PM2.
+El Integrante 1 fue responsable del diseño, implementación y aseguramiento de la capa de acceso al sistema SOC, incluyendo el balanceador de carga, los servidores de aplicaciones, la integración con la base de datos MariaDB y la automatización operativa mediante scripts Bash.
 
-#### Balanceador de Carga NGINX
+La infraestructura implementada se compone de tres máquinas virtuales principales conectadas a través de la VLAN 208:
 
-La VM1 actúa como punto único de entrada para todos los usuarios del sistema. Se configuró NGINX como Reverse Proxy y Load Balancer utilizando el algoritmo Least Connections.
+| Máquina Virtual | Dirección IP  | Función                                          |
+| --------------- | ------------- | ------------------------------------------------ |
+| nginx-lb        | 192.168.208.2 | Balanceador de carga y punto de acceso principal |
+| app1            | 192.168.208.3 | Servidor de aplicación Node.js                   |
+| app2            | 192.168.208.4 | Servidor de aplicación Node.js                   |
 
-Características implementadas:
+El objetivo de esta arquitectura fue proporcionar alta disponibilidad, distribución de carga, acceso seguro mediante HTTPS y mecanismos básicos de detección y mitigación de amenazas.
 
-- Balanceo de carga entre APP1 y APP2.
-- Failover automático ante caída de aplicaciones.
-- Redirección HTTP → HTTPS.
-- TLS 1.2 y TLS 1.3.
-- HSTS (HTTP Strict Transport Security).
-- Rate Limiting contra abuso de peticiones.
-- Ocultamiento de versión mediante server_tokens off.
-- Endpoint /nginx_status para monitoreo desde Grafana.
-- Bloqueo preventivo de herramientas ofensivas (sqlmap, nikto, nmap, masscan y wpscan).
+---
 
-#### Aplicaciones Node.js
+## Implementación del Balanceador de Carga NGINX
 
-Las aplicaciones APP1 y APP2 ejecutan una instancia del portal SOC desarrollado en Node.js.
+La máquina virtual nginx-lb fue configurada como punto único de acceso para todos los usuarios del sistema.
 
-Cada aplicación muestra:
+Se implementó NGINX como Reverse Proxy y Load Balancer utilizando el algoritmo Least Connections:
 
-- Hostname del servidor.
-- Backend activo.
-- Estado operativo.
-- Estado de conexión con MariaDB.
-- Cantidad de usuarios registrados.
-- Tabla usuarios obtenida dinámicamente desde la base de datos socdb.
+```nginx
+upstream soc_backend {
 
-La consulta a MariaDB permite validar en tiempo real la disponibilidad del servicio de base de datos.
+    least_conn;
 
-#### Gestión mediante PM2
+    server app1:3000 max_fails=3 fail_timeout=30s;
+    server app2:3000 max_fails=3 fail_timeout=30s;
 
-Las aplicaciones son administradas mediante PM2 para proporcionar:
+}
+```
 
-- Reinicio automático ante fallos.
-- Ejecución persistente tras reinicios del sistema.
-- Monitoreo de procesos.
-- Gestión centralizada de logs.
+Esta configuración distribuye automáticamente las solicitudes al servidor que posee menor cantidad de conexiones activas.
 
-#### Automatización Bash
+Adicionalmente se configuró detección pasiva de fallos mediante:
 
-Se desarrolló un conjunto de scripts para automatizar tareas operativas:
+* max_fails=3
+* fail_timeout=30s
 
-app_status.sh
-- Consulta remota del estado de APP1 y APP2 mediante SSH.
+Si uno de los servidores deja de responder, NGINX lo elimina temporalmente de la rotación de tráfico y continúa enviando solicitudes al servidor disponible.
 
-health_check.sh
-- Verifica disponibilidad de APP1, APP2 y NGINX.
+Durante las pruebas se verificó el funcionamiento del failover deteniendo manualmente APP1 y comprobando que el servicio continuaba operativo mediante APP2.
 
-lb_status.sh
-- Consulta estado del balanceador y conexiones activas.
+---
 
-soc_menu.sh
-- Consola interactiva SOC Command Center utilizada durante la demostración del proyecto.
+## Configuración HTTPS y Seguridad TLS
 
-La autenticación entre servidores utiliza llaves SSH para permitir la ejecución automatizada sin ingreso manual de contraseñas.
+Con el objetivo de proteger las comunicaciones entre clientes y servidores se configuró HTTPS utilizando certificados SSL.
+
+Se restringieron los protocolos a versiones seguras:
+
+```nginx
+ssl_protocols TLSv1.2 TLSv1.3;
+```
+
+También se implementó una política de cifrado reforzada:
+
+```nginx
+ssl_ciphers HIGH:!aNULL:!MD5;
+ssl_prefer_server_ciphers on;
+```
+
+Toda conexión HTTP es redirigida automáticamente a HTTPS:
+
+```nginx
+return 301 https://$host$request_uri;
+```
+
+De esta forma se garantiza que todo el tráfico intercambiado viaje cifrado.
+
+---
+
+## Hardening del Servidor Web
+
+Como medida de fortalecimiento de la seguridad se aplicaron diversas configuraciones de hardening.
+
+Se ocultó la versión del servidor:
+
+```nginx
+server_tokens off;
+```
+
+Además se implementaron cabeceras de seguridad:
+
+```nginx
+add_header Strict-Transport-Security "max-age=31536000" always;
+add_header X-Frame-Options "DENY" always;
+add_header X-Content-Type-Options "nosniff" always;
+add_header Referrer-Policy "strict-origin" always;
+add_header X-XSS-Protection "1; mode=block" always;
+add_header Permissions-Policy "geolocation=()" always;
+```
+
+Estas configuraciones ayudan a mitigar:
+
+* Clickjacking.
+* Cross Site Scripting (XSS).
+* Divulgación innecesaria de información.
+* Manipulación de contenido.
+* Ataques dirigidos a navegadores.
+
+---
+
+## Mitigación de Reconocimiento y Escaneo
+
+Como parte del enfoque Detectar y Responder, se implementó una política básica de bloqueo basada en User-Agent.
+
+La siguiente configuración identifica herramientas comúnmente utilizadas durante etapas de reconocimiento:
+
+```nginx
+if ($http_user_agent ~* "(sqlmap|nikto|nmap|masscan|wpscan)") {
+    return 403;
+}
+```
+
+Las herramientas detectadas son:
+
+* sqlmap
+* nikto
+* nmap
+* masscan
+* wpscan
+
+Cuando alguna de ellas es identificada, el sistema responde automáticamente con:
+
+```text
+403 Forbidden
+```
+
+registrando el evento en los logs del balanceador.
+
+---
+
+## Protección contra Flooding y Abuso de Solicitudes
+
+Para limitar el abuso de recursos se implementó Rate Limiting:
+
+```nginx
+limit_req_zone $binary_remote_addr zone=soclimit:10m rate=5r/s;
+```
+
+y posteriormente:
+
+```nginx
+limit_req zone=soclimit burst=10 nodelay;
+```
+
+Esta política permite:
+
+* 5 solicitudes por segundo por dirección IP.
+* Ráfagas temporales de hasta 10 solicitudes.
+* Mitigación básica de ataques de denegación de servicio.
+
+---
+
+## Implementación de los Servidores de Aplicación
+
+APP1 y APP2 fueron implementados utilizando Node.js.
+
+Cada aplicación ejecuta una instancia del portal:
+
+```text
+SOC INCIDENT PORTAL
+```
+
+La aplicación desarrollada muestra información operativa en tiempo real:
+
+* Backend activo.
+* Hostname del servidor.
+* Estado de la aplicación.
+* Estado de la base de datos.
+* Cantidad de usuarios registrados.
+* Tabla de usuarios obtenida desde MariaDB.
+
+Esta funcionalidad permite verificar visualmente qué servidor está respondiendo cada solicitud y validar el funcionamiento del balanceador de carga.
+
+---
+
+## Integración con MariaDB
+
+Las aplicaciones fueron integradas con MariaDB mediante la librería mysql2 para Node.js.
+
+Se configuró una conexión hacia:
+
+```text
+Base de Datos: socdb
+Tabla: usuarios
+```
+
+La aplicación consulta dinámicamente la información almacenada y muestra:
+
+* ID
+* Nombre
+* Correo electrónico
+* Edad
+* Fecha de registro
+
+Si la base de datos deja de responder, la aplicación muestra automáticamente el estado:
+
+```text
+ERROR
+```
+
+permitiendo identificar problemas de disponibilidad.
+
+---
+
+## Administración de Aplicaciones con PM2
+
+Para garantizar continuidad operativa se utilizó PM2 como administrador de procesos.
+
+Las funcionalidades implementadas fueron:
+
+* Inicio automático al arrancar el sistema.
+* Reinicio automático ante fallos.
+* Monitoreo de procesos.
+* Persistencia de configuración.
+* Consulta de estado.
+
+Comandos utilizados:
+
+```bash
+pm2 start app.js --name app1
+
+pm2 save
+
+pm2 startup
+
+pm2 list
+
+pm2 restart app1
+```
+
+PM2 permitió mantener la disponibilidad de las aplicaciones durante toda la fase de pruebas.
+
+---
+
+## Automatización Operativa mediante Bash
+
+Como parte del tema de Automatización se desarrolló un conjunto de scripts administrativos ubicados en:
+
+```text
+/opt/soc
+```
+
+### Script app_status.sh
+
+Permite consultar remotamente el estado de las aplicaciones mediante SSH.
+
+```bash
+#!/bin/bash
+
+echo "====== APP STATUS ======"
+
+ssh app1 "pm2 list"
+
+echo
+
+ssh app2 "pm2 list"
+```
+
+Función:
+
+* Verificar el estado de APP1.
+* Verificar el estado de APP2.
+* Consultar PM2 remotamente.
+
+---
+
+### Script health_check.sh
+
+Realiza verificaciones básicas de disponibilidad.
+
+```bash
+#!/bin/bash
+
+echo "=== HEALTH CHECK ==="
+
+curl -s http://app1:3000 > /dev/null
+
+if [ $? -eq 0 ]
+then
+    echo "APP1 OK"
+else
+    echo "APP1 DOWN"
+fi
+
+curl -s http://app2:3000 > /dev/null
+
+if [ $? -eq 0 ]
+then
+    echo "APP2 OK"
+else
+    echo "APP2 DOWN"
+fi
+
+systemctl is-active nginx
+```
+
+Función:
+
+* Detectar caída de APP1.
+* Detectar caída de APP2.
+* Verificar estado de NGINX.
+
+---
+
+### Script lb_status.sh
+
+Permite supervisar el balanceador.
+
+```bash
+#!/bin/bash
+
+echo "====== LOAD BALANCER ======"
+
+systemctl status nginx --no-pager
+
+echo
+echo "Conexiones activas"
+
+ss -ant | grep ':80' | wc -l
+```
+
+Función:
+
+* Consultar estado de NGINX.
+* Verificar conexiones activas.
+* Supervisar carga básica.
+
+---
+
+### Script soc_menu.sh
+
+Se desarrolló una consola centralizada denominada:
+
+```text
+SOC COMMAND CENTER
+```
+
+La herramienta permite acceder desde un único menú a todas las funciones de monitoreo implementadas.
+
+Opciones disponibles:
+
+1. Estado de Aplicaciones.
+2. Health Check.
+3. Estado del Balanceador.
+4. Visualización de Logs.
+5. Consulta de Conexiones Activas.
+
+Esta consola fue diseñada para facilitar las demostraciones durante la feria tecnológica y centralizar las tareas operativas.
+
+---
+
+## Automatización mediante Llaves SSH
+
+Para evitar el uso repetitivo de contraseñas se configuró autenticación mediante llaves SSH entre:
+
+```text
+nginx-lb
+   ├── app1
+   └── app2
+```
+
+La distribución de llaves se realizó utilizando:
+
+```bash
+ssh-keygen -t ed25519
+
+ssh-copy-id usuario@app1
+
+ssh-copy-id usuario@app2
+```
+
+Gracias a esta configuración los scripts pueden ejecutar comandos remotos sin intervención manual, mejorando la automatización y reduciendo errores operativos.
+
+---
 
 ### 5.3. Ficheros de Configuración Clave
 
