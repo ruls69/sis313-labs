@@ -134,6 +134,7 @@
 * NGINX, Node.js, PM2, MariaDB, Prometheus, Grafana, Fail2Ban instalados en sus respectivas VMs.
 * Hydra, Nmap y stress-ng instalados en VM6 (Backup & Attack Server).
 
+
 ### 5.2. Configuración por VM
 
 **VM1 – NGINX (Proxy + Balanceador)**
@@ -206,6 +207,68 @@ gzip /backups/socdb_$(date +%Y%m%d_%H%M).sql
 # /opt/soc/restore_database.sh
 gunzip -c /backups/socdb_latest.sql.gz | mysql -h 192.168.208.5 -u root -p socdb
 ```
+
+### 5.2.1 Implementación de Infraestructura de Aplicaciones (Integrante 1)
+
+La capa de aplicaciones fue diseñada bajo un modelo de alta disponibilidad utilizando un balanceador de carga NGINX y dos servidores de aplicación Node.js (APP1 y APP2), ambos administrados mediante PM2.
+
+#### Balanceador de Carga NGINX
+
+La VM1 actúa como punto único de entrada para todos los usuarios del sistema. Se configuró NGINX como Reverse Proxy y Load Balancer utilizando el algoritmo Least Connections.
+
+Características implementadas:
+
+- Balanceo de carga entre APP1 y APP2.
+- Failover automático ante caída de aplicaciones.
+- Redirección HTTP → HTTPS.
+- TLS 1.2 y TLS 1.3.
+- HSTS (HTTP Strict Transport Security).
+- Rate Limiting contra abuso de peticiones.
+- Ocultamiento de versión mediante server_tokens off.
+- Endpoint /nginx_status para monitoreo desde Grafana.
+- Bloqueo preventivo de herramientas ofensivas (sqlmap, nikto, nmap, masscan y wpscan).
+
+#### Aplicaciones Node.js
+
+Las aplicaciones APP1 y APP2 ejecutan una instancia del portal SOC desarrollado en Node.js.
+
+Cada aplicación muestra:
+
+- Hostname del servidor.
+- Backend activo.
+- Estado operativo.
+- Estado de conexión con MariaDB.
+- Cantidad de usuarios registrados.
+- Tabla usuarios obtenida dinámicamente desde la base de datos socdb.
+
+La consulta a MariaDB permite validar en tiempo real la disponibilidad del servicio de base de datos.
+
+#### Gestión mediante PM2
+
+Las aplicaciones son administradas mediante PM2 para proporcionar:
+
+- Reinicio automático ante fallos.
+- Ejecución persistente tras reinicios del sistema.
+- Monitoreo de procesos.
+- Gestión centralizada de logs.
+
+#### Automatización Bash
+
+Se desarrolló un conjunto de scripts para automatizar tareas operativas:
+
+app_status.sh
+- Consulta remota del estado de APP1 y APP2 mediante SSH.
+
+health_check.sh
+- Verifica disponibilidad de APP1, APP2 y NGINX.
+
+lb_status.sh
+- Consulta estado del balanceador y conexiones activas.
+
+soc_menu.sh
+- Consola interactiva SOC Command Center utilizada durante la demostración del proyecto.
+
+La autenticación entre servidores utiliza llaves SSH para permitir la ejecución automatizada sin ingreso manual de contraseñas.
 
 ### 5.3. Ficheros de Configuración Clave
 
