@@ -60,19 +60,19 @@
                            INTERNET
                                │
                                │
-                  ┌────────────────────────┐
-                  │  NGINX Reverse Proxy   │
-                  │  Load Balancer         │
+                  ┌──────────────────────────────┐
+                  │  NGINX Reverse Proxy         │
+                  │  Load Balancer               │
                   │  IP Física: 192.168.100.168  │
                   │  IP VLAN:  192.168.208.2     │
-                  │  Usuario:  adming8      │
-                  └──────────┬─────────────┘
+                  │  Usuario:  adming8           │
+                  └──────────┬───────────────────┘
                              │
               ┌──────────────┼──────────────┐
               │                             │
    ┌──────────▼──────────┐     ┌───────────▼─────────┐
    │       APP1          │     │        APP2          │
-   │  IP: 100.169/208.3  │     │  IP: 100.170/208.4  │
+   │  IP: 100.169/208.3  │     │  IP: 100.170/208.4   │
    │  Node.js + PM2      │     │  Node.js + PM2       │
    └──────────┬──────────┘     └───────────┬──────────┘
               │                             │
@@ -82,7 +82,7 @@
                 │         MariaDB          │
                 │  IP: 100.171 / 208.5     │
                 │  Base de Datos: socdb    │
-                │  Tablas: usuarios,        │
+                │  Tablas: usuarios,       │
                 │  incidentes, alertas     │
                 └────────────┬─────────────┘
                              │  Logs / Métricas
@@ -110,12 +110,12 @@
 
 | VM / Host | Rol | IP Física | IP VLAN | Usuario | SO |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **VM1 – NGINX** | Reverse Proxy + Load Balancer | 192.168.100.168 | 192.168.208.2 | adming8 | Ubuntu 22.04 |
-| **VM2 – APP1** | Servidor de Aplicación 1 (Node.js + PM2) | 192.168.100.169 | 192.168.208.3 | adming8 | Ubuntu 22.04 |
-| **VM3 – APP2** | Servidor de Aplicación 2 (Node.js + PM2) | 192.168.100.170 | 192.168.208.4 | adming8 | Ubuntu 22.04 |
-| **VM4 – DB** | Base de Datos MariaDB Central | 192.168.100.171 | 192.168.208.5 | adming8 | Ubuntu 22.04 |
-| **VM5 – SOC Server** | Monitoreo, Detección y Respuesta | 192.168.100.172 | 192.168.208.6 | adming8 | Ubuntu 22.04 |
-| **VM6 – Backups** | Backups, Restore y Simulación de Ataques | 192.168.100.173 | 192.168.208.7 | adming8 | Ubuntu 22.04 |
+| **VM1 – NGINX** | Reverse Proxy + Load Balancer | 192.168.100.168 | 192.168.208.2 | adming8 | Ubuntu 24.04.4 LTS |
+| **VM2 – APP1** | Servidor de Aplicación 1 (Node.js + PM2) | 192.168.100.169 | 192.168.208.3 | adming8 | Ubuntu 24.04.4 LTS |
+| **VM3 – APP2** | Servidor de Aplicación 2 (Node.js + PM2) | 192.168.100.170 | 192.168.208.4 | adming8 | Ubuntu 24.04.4 LTS |
+| **VM4 – DB** | Base de Datos MariaDB Central | 192.168.100.171 | 192.168.208.5 | adming8 | Ubuntu 24.04.4 LTS |
+| **VM5 – SOC Server** | Monitoreo, Detección y Respuesta | 192.168.100.172 | 192.168.208.6 | adming8 | Ubuntu 24.04.4 LTS |
+| **VM6 – Backups** | Backups, Restore y Simulación de Ataques | 192.168.100.173 | 192.168.208.7 | adming8 | Ubuntu 24.04.4 LTS |
 
 ### 4.3. Estrategia de Diseño
 
@@ -129,11 +129,10 @@
 
 ### 5.1. Pre-requisitos
 
-* 6 VMs con Ubuntu 22.04 LTS, acceso root/sudo, y conectividad en la red VLAN 192.168.208.0/24.
+* 6 VMs con Ubuntu 24.04.4 LTS, acceso root/sudo, y conectividad en la red VLAN 192.168.208.0/24.
 * Repositorio del proyecto clonado en cada VM.
 * NGINX, Node.js, PM2, MariaDB, Prometheus, Grafana, Fail2Ban instalados en sus respectivas VMs.
 * Hydra, Nmap y stress-ng instalados en VM6 (Backup & Attack Server).
-
 
 ### 5.2. Configuración por VM
 
@@ -173,8 +172,15 @@ pm2 list
 -- Creación de base de datos SOC
 CREATE DATABASE socdb;
 USE socdb;
-CREATE TABLE usuarios (id INT AUTO_INCREMENT PRIMARY KEY, nombre VARCHAR(100), rol VARCHAR(50));
-CREATE TABLE incidentes (id INT AUTO_INCREMENT PRIMARY KEY, tipo VARCHAR(100), fecha DATETIME, estado VARCHAR(50));
+CREATE TABLE `usuarios` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `nombre` varchar(100) NOT NULL,
+  `correo` varchar(150) DEFAULT NULL,
+  `edad` int(11) DEFAULT NULL,
+  `fecha_registro` timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `correo` (`correo`)
+)
 ```
 
 **VM5 – SOC Server**
@@ -199,711 +205,68 @@ sudo fail2ban-client set sshd unbanip 192.168.208.7
 
 ```bash
 # Script de backup automático
-# /opt/soc/backup_manager.sh
-mysqldump -h 192.168.208.5 -u root -p socdb > /backups/socdb_$(date +%Y%m%d_%H%M).sql
-gzip /backups/socdb_$(date +%Y%m%d_%H%M).sql
+# /backups/backup_database.sh
+#!/bin/bash
+
+DATE=$(date +%F_%H-%M)
+
+mysqldump \
+-h 192.168.208.5 \
+-u backup \
+-pjosias \
+socdb > /backups/database/$DATE.sql
+
+gzip /backups/database/$DATE.sql
+
 
 # Script de restore
-# /opt/soc/restore_database.sh
-gunzip -c /backups/socdb_latest.sql.gz | mysql -h 192.168.208.5 -u root -p socdb
-```
-
-# 5.2 Implementación de la Capa de Aplicaciones, Balanceo de Carga y Seguridad Perimetral (Integrante 1)
-
-## 5.2.1 Introducción
-
-El Integrante 1 fue responsable del diseño, implementación y administración de la capa de acceso principal del SOC, compuesta por el balanceador de carga NGINX, los servidores de aplicaciones APP1 y APP2, la integración con MariaDB, la automatización mediante scripts Bash y los mecanismos de seguridad perimetral implementados sobre la infraestructura.
-
-El objetivo principal fue construir una plataforma capaz de mantener la disponibilidad del servicio, distribuir carga entre múltiples servidores, proteger los servicios expuestos frente a actividades de reconocimiento y proporcionar herramientas operativas que faciliten la detección y respuesta ante incidentes.
-
----
-
-# 5.2.2 Diseño de la Red de Aplicaciones
-
-El entorno de trabajo fue desplegado dentro de la VLAN 208 asignada al proyecto.
-
-Cada máquina virtual fue configurada utilizando Netplan para crear una interfaz VLAN independiente sobre la interfaz física proporcionada por la supercomputadora.
-
-La distribución final de direcciones IP fue la siguiente:
-
-| Servicio  | Dirección IP  |
-| --------- | ------------- |
-| nginx-lb  | 192.168.208.2 |
-| app1      | 192.168.208.3 |
-| app2      | 192.168.208.4 |
-| mariadb   | 192.168.208.5 |
-| monitoreo | 192.168.208.6 |
-| backup    | 192.168.208.7 |
-
-La configuración utilizada en los servidores siguió la siguiente estructura:
-
-```yaml
-network:
-  version: 2
-  renderer: networkd
-
-  ethernets:
-    ens18:
-      addresses:
-        - 192.168.100.169/24
-
-      routes:
-        - to: default
-          via: 192.168.100.1
-
-  vlans:
-    vlan208:
-      id: 208
-      link: ens18
-
-      addresses:
-        - 192.168.208.X/28
-```
-
-La utilización de una VLAN dedicada permitió aislar la infraestructura del proyecto respecto a otros grupos alojados dentro de la misma supercomputadora.
-
----
-
-# 5.2.3 Configuración de Hostnames y Resolución de Nombres
-
-Con el objetivo de simplificar la administración y facilitar futuras modificaciones de infraestructura, se configuraron nombres lógicos para cada servidor.
-
-Ejemplos:
-
-```bash
-hostnamectl set-hostname nginx-lb
-hostnamectl set-hostname app1
-hostnamectl set-hostname app2
-```
-
-Posteriormente se configuró resolución local mediante el archivo:
-
-```bash
-/etc/hosts
-```
-
-Agregando las siguientes entradas:
-
-```text
-192.168.208.2 nginx-lb
-192.168.208.3 app1
-192.168.208.4 app2
-192.168.208.5 mariadb
-192.168.208.6 monitoreo
-192.168.208.7 backup
-```
-
-Gracias a esta configuración fue posible utilizar nombres de host dentro de NGINX y los scripts administrativos, evitando el uso constante de direcciones IP.
-
----
-
-# 5.2.4 Implementación del Balanceador de Carga NGINX
-
-La máquina virtual nginx-lb fue configurada como punto único de entrada para todas las solicitudes realizadas por los usuarios.
-
-La instalación se realizó mediante:
-
-```bash
-sudo apt update
-sudo apt install nginx -y
-```
-
-La configuración principal fue almacenada en:
-
-```bash
-/etc/nginx/sites-available/soc
-```
-
-y posteriormente habilitada mediante:
-
-```bash
-ln -s /etc/nginx/sites-available/soc /etc/nginx/sites-enabled/soc
-```
-
-La validación de la sintaxis se realizó utilizando:
-
-```bash
-nginx -t
-```
-
-y la configuración fue aplicada mediante:
-
-```bash
-systemctl reload nginx
-```
-
----
-
-## 5.2.4.1 Configuración del Upstream
-
-Para implementar balanceo de carga se creó un grupo de servidores denominado:
-
-```nginx
-upstream soc_backend {
-
-    least_conn;
-
-    server app1:3000 max_fails=3 fail_timeout=30s;
-    server app2:3000 max_fails=3 fail_timeout=30s;
-
-}
-```
-
-### Decisiones tomadas
-
-#### Algoritmo Least Connections
-
-Se seleccionó el algoritmo:
-
-```nginx
-least_conn;
-```
-
-porque distribuye nuevas conexiones hacia el servidor con menor cantidad de sesiones activas.
-
-Este algoritmo ofrece una distribución más equilibrada cuando existen diferencias de carga entre servidores.
-
-#### Failover Automático
-
-Cada backend fue configurado con:
-
-```nginx
-max_fails=3
-fail_timeout=30s
-```
-
-Si un servidor presenta tres errores consecutivos durante treinta segundos, NGINX deja de enviarle tráfico temporalmente.
-
-Esto permite mantener la disponibilidad incluso cuando una aplicación presenta fallos.
-
----
-
-## 5.2.4.2 Configuración del Reverse Proxy
-
-El tráfico recibido por NGINX es reenviado hacia APP1 o APP2 mediante:
-
-```nginx
-location / {
-
-    limit_req zone=soclimit burst=10 nodelay;
-
-    proxy_pass http://soc_backend;
-
-    proxy_http_version 1.1;
-
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-
-}
-```
-
-Esta configuración permite preservar la dirección IP original del cliente y facilita la generación de logs precisos.
-
----
-
-# 5.2.5 Implementación de HTTPS
-
-Con el objetivo de proteger las comunicaciones entre clientes y servidores se configuró HTTPS.
-
-Los certificados utilizados fueron almacenados en:
-
-```text
-/etc/ssl/certs/soc.crt
-/etc/ssl/private/soc.key
-```
-
-La redirección automática fue configurada mediante:
-
-```nginx
-server {
-
-    listen 80;
-
-    return 301 https://$host$request_uri;
-
-}
-```
-
-Posteriormente se habilitó HTTPS mediante:
-
-```nginx
-listen 443 ssl http2;
-```
-
-y se restringieron los protocolos permitidos:
-
-```nginx
-ssl_protocols TLSv1.2 TLSv1.3;
-```
-
-Con esta configuración se eliminaron protocolos inseguros y se garantizó que todo el tráfico viaje cifrado.
-
----
-
-# 5.2.6 Hardening del Servidor Web
-
-Como parte del fortalecimiento de la superficie de exposición se aplicaron diversas configuraciones de hardening.
-
-Se ocultó la versión de NGINX mediante:
-
-```nginx
-server_tokens off;
-```
-
-para evitar que un atacante identifique fácilmente la versión utilizada.
-
-También se implementaron cabeceras de seguridad:
-
-```nginx
-add_header Strict-Transport-Security "max-age=31536000" always;
-add_header X-Frame-Options "DENY" always;
-add_header X-Content-Type-Options "nosniff" always;
-add_header Referrer-Policy "strict-origin" always;
-add_header X-XSS-Protection "1; mode=block" always;
-add_header Permissions-Policy "geolocation=()" always;
-```
-
-Estas políticas ayudan a mitigar ataques de Clickjacking, XSS y filtración de información.
-
----
-
-# 5.2.7 Protección contra Reconocimiento y Escaneo
-
-Como parte del enfoque Detectar y Responder se implementó una política básica de bloqueo de herramientas ofensivas.
-
-La configuración aplicada fue:
-
-```nginx
-if ($http_user_agent ~* "(sqlmap|nikto|nmap|masscan|wpscan)") {
-    return 403;
-}
-```
-
-Cuando una solicitud contiene alguno de estos User-Agent, NGINX responde automáticamente:
-
-```text
-403 Forbidden
-```
-
-Las pruebas fueron realizadas mediante:
-
-```bash
-curl -A "sqlmap" https://192.168.208.2 -k
-```
-
-obteniendo el resultado esperado.
-
----
-
-# 5.2.8 Implementación de Rate Limiting
-
-Con el objetivo de reducir el impacto de ataques automatizados se implementó limitación de solicitudes.
-
-Configuración:
-
-```nginx
-limit_req_zone $binary_remote_addr zone=soclimit:10m rate=5r/s;
-```
-
-y posteriormente:
-
-```nginx
-limit_req zone=soclimit burst=10 nodelay;
-```
-
-La política permite:
-
-* 5 solicitudes por segundo por IP.
-* Ráfagas controladas de hasta 10 solicitudes.
-* Reducción del impacto de ataques básicos de denegación de servicio.
-
----
-
-# 5.2.9 Preparación para Monitoreo
-
-Con el objetivo de integrar Grafana y Prometheus se habilitó el módulo Stub Status.
-
-Configuración:
-
-```nginx
-location /nginx_status {
-
-    stub_status;
-
-    allow 192.168.208.6;
-    deny all;
-
-}
-```
-
-Esta funcionalidad permite exponer métricas relacionadas con:
-
-* Conexiones activas.
-* Solicitudes procesadas.
-* Estado operativo de NGINX.
-
-El acceso fue restringido exclusivamente al servidor de monitoreo.
-
----
-
-# 5.2.10 Desarrollo del Portal SOC Incident Portal
-
-## Estructura del Proyecto
-
-La aplicación fue desplegada en APP1 y APP2 dentro del directorio:
-
-```bash
-/opt/soc-app
-```
-
-Inicialmente el portal mostraba únicamente información estática.
-
-Posteriormente se decidió transformarlo en una herramienta de validación de infraestructura capaz de verificar simultáneamente:
-
-* Estado de APP1 y APP2.
-* Funcionamiento del balanceador.
-* Disponibilidad de MariaDB.
-* Visualización de datos reales almacenados en la base de datos.
-
----
-
-## Instalación de Dependencias
-
-Se instaló NodeJS:
-
-```bash
-sudo apt install nodejs npm -y
-```
-
-Posteriormente se instaló la librería de conexión a MariaDB:
-
-```bash
-cd /opt/soc-app
-
-npm install mysql2
-```
-
----
-
-## Información Mostrada por el Portal
-
-La aplicación fue diseñada para mostrar información útil durante las pruebas operativas.
-
-Elementos mostrados:
-
-* Backend activo.
-* Hostname del servidor.
-* Estado de la aplicación.
-* Estado de la base de datos.
-* Total de usuarios registrados.
-* Fecha y hora del servidor.
-* Tabla completa de usuarios.
-
-Esta información permite validar visualmente el correcto funcionamiento de toda la infraestructura.
-
----
-
-## Identificación del Backend Activo
-
-Para verificar el funcionamiento del balanceador se implementó identificación dinámica del servidor que responde cada solicitud.
-
-La aplicación utiliza:
-
-```javascript
-os.hostname()
-```
-
-permitiendo visualizar:
-
-```text
-Backend APP1
-```
-
-o
-
-```text
-Backend APP2
-```
-
-según el servidor seleccionado por NGINX.
-
----
-
-## Integración con MariaDB
-
-La aplicación establece conexión con:
-
-```text
-Servidor: 192.168.208.5
-Base de Datos: socdb
-Tabla: usuarios
-```
-
-Cada vez que un usuario accede al portal se ejecuta:
-
-```sql
-SELECT * FROM usuarios;
-```
-
-mostrando información real almacenada en la base de datos.
-
-Campos visualizados:
-
-* id
-* nombre
-* correo
-* edad
-* fecha_registro
-
----
-
-## Problema Encontrado Durante el Desarrollo
-
-Durante las primeras pruebas la aplicación mostraba valores:
-
-```text
-undefined
-```
-
-en la tabla de usuarios.
-
-Tras revisar la estructura mediante:
-
-```sql
-DESCRIBE usuarios;
-```
-
-se identificó que los nombres utilizados en el código no coincidían con los nombres reales de las columnas de MariaDB.
-
-Una vez corregidas las referencias correspondientes, la información comenzó a mostrarse correctamente.
-
----
-
-# 5.2.11 Administración de Aplicaciones con PM2
-
-Con el objetivo de mantener disponibilidad continua se utilizó PM2.
-
-Instalación:
-
-```bash
-npm install -g pm2
-```
-
-Despliegue:
-
-```bash
-pm2 start app.js --name app1
-
-pm2 save
-
-pm2 startup
-```
-
-Administración:
-
-```bash
-pm2 list
-pm2 restart app1
-pm2 stop app1
-pm2 logs app1
-```
-
-PM2 permite reinicio automático ante fallos y persistencia tras reinicios del sistema.
-
----
-
-# 5.2.12 Automatización Operativa mediante Bash
-
-Todos los scripts fueron almacenados en:
-
-```bash
-/opt/soc
-```
-
-El objetivo fue reducir tareas manuales y facilitar la operación del SOC.
-
----
-
-## app_status.sh
-
-Función:
-
-* Consultar APP1.
-* Consultar APP2.
-* Verificar estado PM2 remotamente.
-
-Código:
-
-```bash
+# /backups/recuperar.sh
 #!/bin/bash
 
-echo "====== APP STATUS ======"
+# Configuración de variables (T1 / T15)
+DIR_RESPALDOS="/backups/database"
+DB_HOST="192.168.208.5"
+DB_USER="backup"
+DB_PASS="josias"
+DB_NAME="socdb"
 
-ssh app1 "pm2 list"
+echo "===================================================="
+echo "      SISTEMA DE RECUPERACIÓN ANTE DESASTRES - SOC  "
+echo "===================================================="
 
-echo
+# 1. Listar los respaldos disponibles para que el usuario elija
+echo "=== Respaldos disponibles en el sistema:"
+# Opción corregida y robusta:
+ls -1 "$DIR_RESPALDOS"/*.sql.gz 2>/dev/null | xargs -L 1 basename
+echo "----------------------------------------------------"
 
-ssh app2 "pm2 list"
-```
+# 2. Solicitar al administrador qué archivo usar
+read -p "- Escribe el nombre exacto del archivo a restaurar (ej: 2026-06-07_17-14.sql.gz): " ARCHIVO_ELEGIDO
 
----
+RUTA_COMPLETA="$DIR_RESPALDOS/$ARCHIVO_ELEGIDO"
 
-## health_check.sh
-
-Función:
-
-* Verificar APP1.
-* Verificar APP2.
-* Verificar NGINX.
-
-Código:
-
-```bash
-#!/bin/bash
-
-echo "=== HEALTH CHECK ==="
-
-curl -s http://app1:3000 > /dev/null
-
-if [ $? -eq 0 ]
-then
-    echo "APP1 OK"
-else
-    echo "APP1 DOWN"
+# Validar que el archivo realmente exista
+if [ ! -f "$RUTA_COMPLETA" ]; then
+    echo "!!! x Error: El archivo '$ARCHIVO_ELEGIDO' no existe."
+    exit 1
 fi
 
-curl -s http://app2:3000 > /dev/null
+echo "... Iniciando restauración de la base de datos desde la VLAN..."
 
-if [ $? -eq 0 ]
-then
-    echo "APP2 OK"
+# 3. La magia de la recuperación en una sola línea sin extraer en disco de forma permanente (T14)
+# 'zcat' lee el contenido comprimido al vuelo y lo envía por tubería '|' al cliente de mysql remoto
+zcat "$RUTA_COMPLETA" | mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$DB_NAME"
+
+# 4. Verificación del estado de salida del comando anterior
+if [ ${PIPESTATUS[1]} -eq 0 ]; then
+    echo "===================================================="
+    echo "✓ ¡ÉXITO! La base de datos '$DB_NAME' ha sido restaurada."
+    echo "   Estado: Operacional a partir del respaldo: $ARCHIVO_ELEGIDO"
+    echo "===================================================="
 else
-    echo "APP2 DOWN"
+    echo "!!! Error crítico: Falló la inyección del respaldo en el servidor remoto."
 fi
-
-systemctl is-active nginx
 ```
-
----
-
-## lb_status.sh
-
-Función:
-
-* Verificar NGINX.
-* Mostrar conexiones activas.
-
-Código:
-
-```bash
-#!/bin/bash
-
-echo "====== LOAD BALANCER ======"
-
-systemctl status nginx --no-pager
-
-echo
-echo "Conexiones activas"
-
-ss -ant | grep ':80' | wc -l
-```
-
----
-
-# 5.2.13 Desarrollo del SOC Command Center
-
-Con el objetivo de centralizar todas las tareas operativas se desarrolló una consola administrativa propia denominada:
-
-```text
-SOC COMMAND CENTER
-```
-
-Ubicación:
-
-```bash
-/opt/soc/soc_menu.sh
-```
-
-Antes de su implementación era necesario ejecutar manualmente múltiples comandos para verificar el estado de la infraestructura.
-
-La consola fue desarrollada para actuar como una capa de orquestación sobre los scripts previamente creados.
-
-Al ejecutarse:
-
-```bash
-bash /opt/soc/soc_menu.sh
-```
-
-presenta un menú interactivo con opciones de monitoreo y administración.
-
-Funciones integradas:
-
-1. Estado de Aplicaciones.
-2. Health Check.
-3. Estado del Balanceador.
-4. Visualización de Logs.
-5. Consulta de Conexiones Activas.
-6. Salida del sistema.
-
-La herramienta permite realizar verificaciones rápidas sin necesidad de recordar comandos individuales.
-
-Durante la feria tecnológica será utilizada como consola principal de operación y demostración del SOC.
-
----
-
-# 5.2.14 Automatización mediante Llaves SSH
-
-Inicialmente los scripts requerían ingreso manual de contraseñas.
-
-Para automatizar completamente la ejecución se implementó autenticación mediante llaves SSH.
-
-Generación:
-
-```bash
-ssh-keygen -t ed25519
-```
-
-Distribución:
-
-```bash
-ssh-copy-id usuario@app1
-ssh-copy-id usuario@app2
-```
-
-Validación:
-
-```bash
-ssh app1 hostname
-ssh app2 hostname
-```
-
-Gracias a esta configuración fue posible ejecutar consultas remotas desde nginx-lb sin intervención del operador.
-
----
-
-# 5.2.15 Pruebas Realizadas
-
-Las pruebas efectuadas sobre la infraestructura implementada fueron:
-
-| Prueba               | Resultado |
-| -------------------- | --------- |
-| Balanceo APP1 ↔ APP2 | Exitosa   |
-| Failover APP1        | Exitosa   |
-| HTTPS                | Exitosa   |
-| TLS 1.2/1.3          | Exitosa   |
-| Integración MariaDB  | Exitosa   |
-| Consulta de usuarios | Exitosa   |
-| PM2                  | Exitosa   |
-| SSH Keys             | Exitosa   |
-| Rate Limiting        | Exitosa   |
-| Bloqueo SQLMap       | Exitosa   |
-| nginx_status         | Exitosa   |
-| SOC Command Center   | Exitosa   |
-
-Los resultados obtenidos demostraron el correcto funcionamiento de la infraestructura implementada y su integración con el resto de componentes del SOC.
-
 
 ### 5.3. Ficheros de Configuración Clave
 
@@ -912,8 +275,8 @@ Los resultados obtenidos demostraron el correcto funcionamiento de la infraestru
 | `/etc/nginx/sites-available/socshield.conf` | Configuración del proxy inverso y balanceo de carga |
 | `/etc/fail2ban/jail.local` | Reglas de detección y bloqueo de fuerza bruta SSH |
 | `/etc/prometheus/prometheus.yml` | Scrape targets de todas las VMs |
-| `/opt/soc/backup_manager.sh` | Backup automático de MariaDB con compresión |
-| `/opt/soc/restore_database.sh` | Restauración automática de la base de datos |
+| `/backups/backup_database.sh` | Backup automático de MariaDB con compresión |
+| `/backups/recuperar.sh` | Restauración automática de la base de datos |
 | `/opt/soc/health_check.sh` | Verificación de estado de todos los servicios |
 | `/opt/soc/soc_menu.sh` | Menú interactivo SOC Command Center |
 
@@ -1089,4 +452,4 @@ El proyecto **SOC** logró integrar exitosamente los conceptos fundamentales de 
 
 ---
 
-*Informe generado para la Feria de Proyectos — SIS313: Infraestructura, Plataformas Tecnológicas y Redes — Universidad San Francisco Xavier de Chuquisaca — Semestre 1/2026*
+*Informe — SIS313: Infraestructura, Plataformas Tecnológicas y Redes — Universidad San Francisco Xavier de Chuquisaca — Semestre 1/2026*
