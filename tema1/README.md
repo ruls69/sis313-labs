@@ -136,35 +136,608 @@
 
 ### 5.2. Configuración por VM
 
-**VM1 – NGINX (Proxy + Balanceador)**
+La configuración utilizada en los servidores siguió la siguiente estructura:
 
-```nginx
-# /etc/nginx/sites-available/socshield.conf
-upstream socapp {
-    server 192.168.208.3:3000;
-    server 192.168.208.4:3000;
-}
+```yaml
+network:
+  version: 2
+  renderer: networkd
 
-server {
-    listen 80;
-    location / {
-        proxy_pass http://socapp;
-        limit_req zone=one burst=20 nodelay;
-    }
-}
+  ethernets:
+    ens18:
+      addresses:
+        - 192.168.100.169/24
+
+      routes:
+        - to: default
+          via: 192.168.100.1
+
+  vlans:
+    vlan208:
+      id: 208
+      link: ens18
+
+      addresses:
+        - 192.168.208.X/28
 ```
 
-**VM2 y VM3 – APP1 y APP2 (Node.js + PM2)**
+La utilización de una VLAN dedicada permitió aislar la infraestructura del proyecto respecto a otros grupos alojados dentro de la misma supercomputadora.
+
+---
+# Configuración de Hostnames y Resolución de Nombres
+
+Con el objetivo de simplificar la administración y facilitar futuras modificaciones de infraestructura, se configuraron nombres lógicos para cada servidor.
+
+Ejemplos:
 
 ```bash
-# Iniciar aplicación con PM2
-pm2 start app.js --name app1
-pm2 save
-pm2 startup
-
-# Verificar estado
-pm2 list
+hostnamectl set-hostname nginx-lb
+hostnamectl set-hostname app1
+hostnamectl set-hostname app2
 ```
+
+Posteriormente se configuró resolución local mediante el archivo:
+
+```bash
+/etc/hosts
+```
+
+Agregando las siguientes entradas:
+
+```text
+192.168.208.2 nginx-lb
+192.168.208.3 app1
+192.168.208.4 app2
+192.168.208.5 mariadb
+192.168.208.6 monitoreo
+192.168.208.7 backup
+```
+
+Gracias a esta configuración fue posible utilizar nombres de host dentro de NGINX y los scripts administrativos, evitando el uso constante de direcciones IP.
+
+---
+# Implementación del Balanceador de Carga NGINX
+
+La máquina virtual nginx-lb fue configurada como punto único de entrada para todas las solicitudes realizadas por los usuarios.
+
+La instalación se realizó mediante:
+
+```bash
+sudo apt update
+sudo apt install nginx -y
+```
+
+La configuración principal fue almacenada en:
+
+```bash
+/etc/nginx/sites-available/soc
+```
+
+y posteriormente habilitada mediante:
+
+```bash
+ln -s /etc/nginx/sites-available/soc /etc/nginx/sites-enabled/soc
+```
+
+La validación de la sintaxis se realizó utilizando:
+
+```bash
+nginx -t
+```
+
+y la configuración fue aplicada mediante:
+
+```bash
+systemctl reload nginx
+```
+
+---
+## Configuración del Upstream
+
+Para implementar balanceo de carga se creó un grupo de servidores denominado:
+
+```nginx
+upstream soc_backend {
+
+    least_conn;
+
+    server app1:3000 max_fails=3 fail_timeout=30s;
+    server app2:3000 max_fails=3 fail_timeout=30s;
+
+}
+```
+#### Failover Automático
+
+Cada backend fue configurado con:
+
+```nginx
+max_fails=3
+fail_timeout=30s
+```
+
+Si un servidor presenta tres errores consecutivos durante treinta segundos, NGINX deja de enviarle tráfico temporalmente.
+
+Esto permite mantener la disponibilidad incluso cuando una aplicación presenta fallos.
+
+---
+# Implementación de HTTPS
+
+Con el objetivo de proteger las comunicaciones entre clientes y servidores se configuró HTTPS.
+
+Los certificados utilizados fueron almacenados en:
+
+```text
+/etc/ssl/certs/soc.crt
+/etc/ssl/private/soc.key
+```
+
+La redirección automática fue configurada mediante:
+
+```nginx
+server {
+
+    listen 80;
+
+    return 301 https://$host$request_uri;
+
+}
+```
+
+Posteriormente se habilitó HTTPS mediante:
+
+```nginx
+listen 443 ssl http2;
+```
+
+y se restringieron los protocolos permitidos:
+
+```nginx
+ssl_protocols TLSv1.2 TLSv1.3;
+```
+
+Con esta configuración se eliminaron protocolos inseguros y se garantizó que todo el tráfico viaje cifrado.
+
+---
+
+# Hardening del Servidor Web
+
+Como parte del fortalecimiento de la superficie de exposición se aplicaron diversas configuraciones de hardening.
+
+Se ocultó la versión de NGINX mediante:
+
+```nginx
+server_tokens off;
+```
+
+para evitar que un atacante identifique fácilmente la versión utilizada.
+
+También se implementaron cabeceras de seguridad:
+
+```nginx
+add_header Strict-Transport-Security "max-age=31536000" always;
+add_header X-Frame-Options "DENY" always;
+add_header X-Content-Type-Options "nosniff" always;
+add_header Referrer-Policy "strict-origin" always;
+add_header X-XSS-Protection "1; mode=block" always;
+add_header Permissions-Policy "geolocation=()" always;
+```
+
+Estas políticas ayudan a mitigar ataques de Clickjacking, XSS y filtración de información.
+
+---
+
+# Protección contra Reconocimiento y Escaneo
+
+Como parte del enfoque Detectar y Responder se implementó una política básica de bloqueo de herramientas ofensivas.
+
+La configuración aplicada fue:
+
+```nginx
+if ($http_user_agent ~* "(sqlmap|nikto|nmap|masscan|wpscan)") {
+    return 403;
+}
+```
+
+Cuando una solicitud contiene alguno de estos User-Agent, NGINX responde automáticamente:
+
+```text
+403 Forbidden
+```
+
+Las pruebas fueron realizadas mediante:
+
+```bash
+curl -A "sqlmap" https://192.168.208.2 -k
+```
+
+obteniendo el resultado esperado.
+
+---
+
+# Implementación de Rate Limiting
+
+Con el objetivo de reducir el impacto de ataques automatizados se implementó limitación de solicitudes.
+
+Configuración:
+
+```nginx
+limit_req_zone $binary_remote_addr zone=soclimit:10m rate=5r/s;
+```
+
+y posteriormente:
+
+```nginx
+limit_req zone=soclimit burst=10 nodelay;
+```
+
+La política permite:
+
+* 5 solicitudes por segundo por IP.
+* Ráfagas controladas de hasta 10 solicitudes.
+* Reducción del impacto de ataques básicos de denegación de servicio.
+
+---
+
+# Preparación para Monitoreo
+
+Con el objetivo de integrar Grafana y Prometheus se habilitó el módulo Stub Status.
+
+Configuración:
+
+```nginx
+location /nginx_status {
+
+    stub_status;
+
+    allow 192.168.208.6;
+    deny all;
+
+}
+```
+
+Esta funcionalidad permite exponer métricas relacionadas con:
+
+* Conexiones activas.
+* Solicitudes procesadas.
+* Estado operativo de NGINX.
+
+El acceso fue restringido exclusivamente al servidor de monitoreo.
+
+---
+
+# Desarrollo del Portal SOC Incident Portal
+
+## Estructura del Proyecto
+
+La aplicación fue desplegada en APP1 y APP2 dentro del directorio:
+
+```bash
+/opt/soc-app
+```
+
+Inicialmente el portal mostraba únicamente información estática.
+
+Posteriormente se decidió transformarlo en una herramienta de validación de infraestructura capaz de verificar simultáneamente:
+
+* Estado de APP1 y APP2.
+* Funcionamiento del balanceador.
+* Disponibilidad de MariaDB.
+* Visualización de datos reales almacenados en la base de datos.
+
+---
+
+## Instalación de Dependencias
+
+Se instaló NodeJS:
+
+```bash
+sudo apt install nodejs npm -y
+```
+
+Posteriormente se instaló la librería de conexión a MariaDB:
+
+```bash
+cd /opt/soc-app
+
+npm install mysql2
+```
+
+---
+
+## Información Mostrada por el Portal
+
+La aplicación fue diseñada para mostrar información útil durante las pruebas operativas.
+
+Elementos mostrados:
+
+* Backend activo.
+* Hostname del servidor.
+* Estado de la aplicación.
+* Estado de la base de datos.
+* Total de usuarios registrados.
+* Fecha y hora del servidor.
+* Tabla completa de usuarios.
+
+Esta información permite validar visualmente el correcto funcionamiento de toda la infraestructura.
+
+---
+
+## Identificación del Backend Activo
+
+Para verificar el funcionamiento del balanceador se implementó identificación dinámica del servidor que responde cada solicitud.
+
+La aplicación utiliza:
+
+```javascript
+curl hhtp://192.168.100.168
+```
+
+permitiendo visualizar:
+
+```text
+Backend APP1
+```
+
+o
+
+```text
+Backend APP2
+```
+
+según el servidor seleccionado por NGINX.
+
+---
+
+## Integración con MariaDB
+
+La aplicación establece conexión con:
+
+```text
+Servidor: 192.168.208.5
+Base de Datos: socdb
+Tabla: usuarios
+```
+
+Cada vez que un usuario accede al portal se ejecuta:
+
+```sql
+SELECT * FROM usuarios;
+```
+
+mostrando información real almacenada en la base de datos.
+
+Campos visualizados:
+
+* id
+* nombre
+* correo
+* edad
+* fecha_registro
+
+---
+
+# Administración de Aplicaciones con PM2
+
+Con el objetivo de mantener disponibilidad continua se utilizó PM2.
+
+Instalación:
+
+```bash
+npm install -g pm2
+```
+
+Despliegue:
+
+```bash
+pm2 start app.js --name app1
+
+pm2 save
+
+pm2 startup
+```
+
+Administración:
+
+```bash
+pm2 list
+pm2 restart app1
+pm2 stop app1
+pm2 logs app1
+```
+
+PM2 permite reinicio automático ante fallos y persistencia tras reinicios del sistema.
+
+---
+
+# Automatización Operativa mediante Bash
+
+Todos los scripts fueron almacenados en:
+
+```bash
+/opt/soc
+```
+
+El objetivo fue reducir tareas manuales y facilitar la operación del SOC.
+
+---
+
+## app_status.sh
+
+Función:
+
+* Consultar APP1.
+* Consultar APP2.
+* Verificar estado PM2 remotamente.
+
+Código:
+
+```bash
+#!/bin/bash
+
+echo "====== APP STATUS ======"
+
+ssh app1 "pm2 list"
+
+echo
+
+ssh app2 "pm2 list"
+```
+
+---
+
+## health_check.sh
+
+Función:
+
+* Verificar APP1.
+* Verificar APP2.
+* Verificar NGINX.
+
+Código:
+
+```bash
+#!/bin/bash
+
+echo "=== HEALTH CHECK ==="
+
+curl -s http://app1:3000 > /dev/null
+
+if [ $? -eq 0 ]
+then
+    echo "APP1 OK"
+else
+    echo "APP1 DOWN"
+fi
+
+curl -s http://app2:3000 > /dev/null
+
+if [ $? -eq 0 ]
+then
+    echo "APP2 OK"
+else
+    echo "APP2 DOWN"
+fi
+
+systemctl is-active nginx
+```
+
+---
+
+## lb_status.sh
+
+Función:
+
+* Verificar NGINX.
+* Mostrar conexiones activas.
+
+Código:
+
+```bash
+#!/bin/bash
+
+echo "====== LOAD BALANCER ======"
+
+systemctl status nginx --no-pager
+
+echo
+echo "Conexiones activas"
+
+ss -ant | grep ':80' | wc -l
+```
+
+---
+
+# Desarrollo del SOC Command Center
+
+Con el objetivo de centralizar todas las tareas operativas se desarrolló una consola administrativa propia denominada:
+
+```text
+SOC COMMAND CENTER
+```
+
+Ubicación:
+
+```bash
+/opt/soc/soc_menu.sh
+```
+
+Antes de su implementación era necesario ejecutar manualmente múltiples comandos para verificar el estado de la infraestructura.
+
+La consola fue desarrollada para actuar como una capa de orquestación sobre los scripts previamente creados.
+
+Al ejecutarse:
+
+```bash
+bash /opt/soc/soc_menu.sh
+```
+
+presenta un menú interactivo con opciones de monitoreo y administración.
+
+Funciones integradas:
+
+1. Estado de Aplicaciones.
+2. Health Check.
+3. Estado del Balanceador.
+4. Visualización de Logs.
+5. Consulta de Conexiones Activas.
+6. Salida del sistema.
+
+La herramienta permite realizar verificaciones rápidas sin necesidad de recordar comandos individuales.
+
+Durante la feria tecnológica será utilizada como consola principal de operación y demostración del SOC.
+
+---
+
+# Automatización mediante Llaves SSH
+
+Inicialmente los scripts requerían ingreso manual de contraseñas.
+
+Para automatizar completamente la ejecución se implementó autenticación mediante llaves SSH.
+
+Generación:
+
+```bash
+ssh-keygen -t ed25519
+```
+
+Distribución:
+
+```bash
+ssh-copy-id ruls@app1
+ssh-copy-id ruls@app2
+```
+
+Validación:
+
+```bash
+ssh app1
+ssh app2
+```
+
+Gracias a esta configuración fue posible ejecutar consultas remotas desde nginx-lb sin intervención del operador.
+
+---
+
+# Pruebas Realizadas
+
+Las pruebas efectuadas sobre la infraestructura implementada fueron:
+
+| Prueba               | Resultado |
+| -------------------- | --------- |
+| Balanceo APP1 ↔ APP2 | Exitosa   |
+| Failover APP1        | Exitosa   |
+| HTTPS                | Exitosa   |
+| TLS 1.2/1.3          | Exitosa   |
+| Integración MariaDB  | Exitosa   |
+| Consulta de usuarios | Exitosa   |
+| PM2                  | Exitosa   |
+| SSH Keys             | Exitosa   |
+| Rate Limiting        | Exitosa   |
+| Bloqueo SQLMap       | Exitosa   |
+| nginx_status         | Exitosa   |
+| SOC Command Center   | Exitosa   |
+
+Los resultados obtenidos demostraron el correcto funcionamiento de la infraestructura implementada y su integración con el resto de componentes del SOC.
 
 **VM4 – Base de Datos (MariaDB)**
 
